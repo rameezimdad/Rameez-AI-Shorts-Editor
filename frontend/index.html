@@ -430,6 +430,9 @@ kbd { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 11px; ba
   const dur = () => Number(st.job && st.job.duration) || (st.rendered && st.rendered.duration) || 0;
   const label = v => String(v).replace(/_/g, ' ');
 
+  // any uncaught page error becomes a visible toast with the real message (instead of a silent console line)
+  window.addEventListener('error', e => toast('Page error: ' + (e.message || e.error), 'error', 12000));
+  window.addEventListener('unhandledrejection', e => toast('Page error: ' + ((e.reason && e.reason.message) || e.reason), 'error', 12000));
   function toast(msg, kind = 'error', ms = 6000) {
     const t = document.createElement('div');
     t.className = 'toast ' + kind; t.textContent = msg; t.onclick = () => t.remove();
@@ -555,9 +558,11 @@ kbd { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 11px; ba
   }
 
   // ---------- result
+  const PLAN_LISTS = ['captions', 'sfx', 'stickers', 'headlines', 'badges', 'voice', 'zooms', 'code', 'cuts', 'broll'];
+  const normalizePlan = p => { p = p || {}; PLAN_LISTS.forEach(k => { Array.isArray(p[k]) || (p[k] = []); }); p.hook = p.hook || ''; p.music_mood = p.music_mood || ''; return p; };
   async function loadResult() {
     const id = st.job.job_id;
-    try { st.plan = await api(`/api/jobs/${id}/plan`); } catch (e) { return toast(e.message); }
+    try { st.plan = normalizePlan(await api(`/api/jobs/${id}/plan`)); } catch (e) { return toast(e.message); }
     st.rendered = JSON.parse(JSON.stringify(st.plan)); st.rendered.duration = st.job.duration;
     el.video.src = `/api/jobs/${id}/output?v=${Date.now()}`; el.dl.href = `/api/jobs/${id}/output?download=1`;
     el.jobMeta.innerHTML = `<i class="fa-solid fa-file-video"></i> ${esc(st.job.filename)} · ${fmtT(st.job.duration)}s · lang ${esc(st.job.language || '?')} · job <span class="mono">${id}</span>`;
@@ -568,7 +573,7 @@ kbd { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 11px; ba
   }
   function renderUsage() {
     const u = st.job.usage || {};
-    const base = u.calls ? `${u.calls} LLM call${u.calls > 1 ? 's' : ''} · ${u.prompt_tokens.toLocaleString()} in / ${u.completion_tokens.toLocaleString()} out · est. ${money(u.cost_usd)} · ${esc(u.model)}` : 'no LLM tokens used';
+    const base = u.calls ? `${u.calls} LLM call${u.calls > 1 ? 's' : ''} · ${(u.prompt_tokens || 0).toLocaleString()} in / ${(u.completion_tokens || 0).toLocaleString()} out · est. ${money(u.cost_usd)} · ${esc(u.model)}` : 'no LLM tokens used';
     el.usage.innerHTML = base + (u.media_calls ? ` · ${u.media_calls} AI media ≈ ${money(u.media_cost_usd)}` : '');
   }
 
@@ -717,7 +722,7 @@ kbd { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 11px; ba
   });
   el.reset.addEventListener('click', async () => {
     if (!st.job) return;
-    try { st.plan = await api(`/api/jobs/${st.job.job_id}/plan?original=1`); st.sel = null; renderPanel(); renderTimeline(); toast('AI plan restored - hit Re-render to apply', 'ok', 3000); }
+    try { st.plan = normalizePlan(await api(`/api/jobs/${st.job.job_id}/plan?original=1`)); st.sel = null; renderPanel(); renderTimeline(); toast('AI plan restored - hit Re-render to apply', 'ok', 3000); }
     catch (e) { toast(e.message); }
   });
   function resetAll() {
@@ -749,7 +754,7 @@ kbd { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 11px; ba
     const step = pps >= 90 ? 0.5 : pps >= 40 ? 1 : pps >= 25 ? 2 : 5;
     let ruler = '';
     for (let t = 0; t <= D; t += step) ruler += `<div class="tl-tick${(t / step) % (step < 1 ? 2 : 1) ? ' minor' : ''}" style="left:${t * pps}px">${Number.isInteger(t) ? t + 's' : ''}</div>`;
-    const cutShade = p.cuts.map(c => `<div class="tl-cutshade" style="left:${c.start * pps}px;width:${(c.end - c.start) * pps}px"></div>`).join('');
+    const cutShade = (p.cuts || []).map(c => `<div class="tl-cutshade" style="left:${c.start * pps}px;width:${(c.end - c.start) * pps}px"></div>`).join('');
     const tracks = TRACKS.map(t => `<div class="tl-track" data-track="${t.key}">${cutShade}${(p[t.key] || []).map((x, i) => {
       const s = Number(x[t.s]) || 0, e = t.e ? Number(x[t.e]) || s : s, sel = st.sel && st.sel.l === t.key && st.sel.i === i;
       return `<div class="tl-block${t.e ? '' : ' point'}${t.key === 'cuts' ? ' cut' : ''}${sel ? ' selected' : ''}" data-l="${t.key}" data-i="${i}" style="left:${s * pps}px;width:${Math.max(8, (e - s) * pps)}px;background:${t.key === 'cuts' ? '' : t.color}" title="${esc(t.txt(x))} · ${fmtT(s)}${t.e ? ' → ' + fmtT(e) : ''}">${t.e ? esc(t.txt(x)) : ''}</div>`;
