@@ -1,0 +1,15 @@
+.env
+.venv/
+venv/
+__pycache__/
+*.pyc
+storage/uploads/*
+storage/outputs/*
+storage/work/*
+!storage/**/.gitkeep
+assets/fonts/*.ttf
+assets/sfx/*.wav
+assets/stickers/*.webm
+.ruff_cache/
+models/
+assets/audio/*.rnnn

@@ -1,0 +1,847 @@
+<!--
+  Developed by Mohammad Rameez Imdad (Rameez Scripts)
+  WhatsApp: https://whatsapp.rameezscripts.com/ (For Custom Projects)
+  YouTube: https://www.youtube.com/@rameezimdad (Subscribe for more!)
+
+  AI Shorts Editor - single-page editor. Vanilla JS, Navy Blue theme, no build step.
+  Two-signal rule: thin top bar = reads (polling, plan fetch), branded overlay = writes (upload, re-render, refine, delete).
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#001f3f">
+<title>AI Shorts Editor</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.14.5/dist/sweetalert2.all.min.js"></script>
+<style>
+/* ---- Navy Blue theme base (docs/css-styles.md) ---- */
+:root { --navy-primary: #001f3f; --navy-dark: #001529; --navy-light: #003366; --navy-accent: #0074D9; --navy-hover: #002a52; --success: #34a853; --warning: #fbbc04; --danger: #ea4335; }
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:where(button, input, select, textarea) { font: inherit; }
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; color: #333; -webkit-tap-highlight-color: transparent; touch-action: manipulation; overflow-x: hidden; }
+input, select, textarea { font-size: 16px !important; touch-action: manipulation; }
+.data-section { background: white; padding: 20px; border-radius: 3px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+.section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; gap: 12px; flex-wrap: wrap; }
+.section-header h2 { font-size: 20px; color: #333; display: flex; align-items: center; gap: 10px; }
+.section-header h2 i { color: var(--navy-primary); }
+.btn { padding: 10px 20px; border: none; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.3s; display: inline-flex; align-items: center; justify-content: center; gap: 8px; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+.btn-primary { background: var(--navy-primary); color: white; }
+.btn-primary:hover { background: var(--navy-hover); transform: translateY(-2px); }
+.btn-success { background: #34a853; color: white; }
+.btn-danger { background: #ea4335; color: white; }
+.btn-secondary { background: #6c757d; color: white; }
+.btn-accent { background: var(--navy-accent); color: white; }
+.btn:disabled, .btn[disabled] { opacity: .65; cursor: not-allowed; pointer-events: none; }
+.btn .fa-spinner { margin-right: 6px; }
+.btn-sm { padding: 8px 16px; font-size: 13px; font-weight: 600; }
+.btn-xs { padding: 5px 9px; font-size: 12px; border-radius: 4px; }
+.btn:focus-visible, .action-icon:focus-visible { outline: 2px solid var(--navy-accent); outline-offset: 2px; }
+.form-group { margin-bottom: 20px; }
+.form-group label { display: block; margin-bottom: 8px; color: #555; font-weight: 500; font-size: 14px; }
+.form-group label i { color: var(--navy-primary); margin-right: 6px; }
+.form-group input, .form-group select, .form-group textarea { width: 100%; padding: 14px 16px; border: 1px solid #d0d0d0; border-radius: 2px; font-size: 16px; transition: all 0.3s; font-family: inherit; }
+.form-group input:focus-visible, .form-group textarea:focus-visible { outline: none; border-color: var(--navy-accent); box-shadow: 0 0 0 2px rgba(0,116,217,0.1); }
+.form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+.action-icon { background: transparent; border: none; cursor: pointer; font-size: 16px; padding: 6px 10px; border-radius: 6px; transition: all 0.3s; }
+.action-icon.delete-icon { color: #ea4335; }
+.action-icon.delete-icon:hover { background: rgba(234,67,53,0.1); transform: scale(1.15); }
+.action-icon.edit-icon { color: #fbbc04; }
+.action-icon.edit-icon:hover { background: rgba(251,188,4,0.1); transform: scale(1.15); }
+.status-badge { padding: 6px 14px; border-radius: 3px; font-size: 13px; font-weight: 600; display: inline-block; }
+.status-active { background: #d4edda; color: #155724; }
+.status-inactive { background: #f8d7da; color: #721c24; }
+.filter-input { width: 100%; padding: 10px 12px; border: 2px solid #ced4da; border-radius: 3px; font-size: 16px; transition: all 0.3s; font-family: inherit; background: white; touch-action: manipulation; }
+.filter-input:focus-visible { outline: none; border-color: var(--navy-accent); box-shadow: 0 0 0 3px rgba(0,116,217,0.15); }
+/* toggle (DaisyUI-style) + mandatory width guard */
+.toggle { appearance: none; -webkit-appearance: none; width: 44px; height: 24px; border-radius: 24px; background: #ccc; position: relative; cursor: pointer; transition: background .3s; border: none; outline: none; vertical-align: middle; }
+.toggle:checked { background: #0074D9; }
+.toggle::before { content: ""; position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; border-radius: 50%; background: #fff; transition: transform .3s; box-shadow: 0 1px 3px rgba(0,0,0,.2); }
+.toggle:checked::before { transform: translateX(20px); }
+.form-group .toggle, .toggle-row .toggle { width: 44px; min-width: 44px; max-width: 44px; height: 24px; flex: 0 0 44px; padding: 0; }
+.toggle-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 14px; border: 1px solid #e6e6e6; border-radius: 3px; background: #fafbfc; cursor: pointer; }
+.toggle-row b { display: block; font-size: 14px; color: #333; }
+.toggle-row small { color: #777; font-size: 12px; }
+/* file input (DaisyUI-style) */
+.file-input { width: 100%; max-width: 100%; height: 42px; border: 1px solid #cfd6dd; border-radius: 3px; background: #fff; color: #444; cursor: pointer; }
+.file-input::file-selector-button { height: 100%; border: none; background: var(--navy-primary); color: #fff; padding: 0 18px; margin-right: 12px; font-size: 13.5px; font-weight: 600; cursor: pointer; transition: background .2s; }
+.file-input:hover::file-selector-button { background: var(--navy-hover); }
+.file-input:focus-visible { outline: none; border-color: var(--navy-accent); box-shadow: 0 0 0 2px rgba(0,116,217,.12); }
+/* top loading bar - reads only */
+.top-loadbar { position: fixed; top: 0; left: 0; right: 0; height: 3px; z-index: 10001; overflow: hidden; pointer-events: none; }
+.top-loadbar > span { display: block; height: 100%; width: 38%; border-radius: 0 3px 3px 0; background: linear-gradient(90deg, rgba(0,116,217,0), var(--navy-accent), var(--navy-primary)); box-shadow: 0 0 8px rgba(0,116,217,.5); animation: topLoadSlide 1.05s ease-in-out infinite; }
+@keyframes topLoadSlide { 0% { transform: translateX(-105%); } 100% { transform: translateX(320%); } }
+/* branded processing overlay - writes only */
+.action-loader { position: fixed; inset: 0; z-index: 3000; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; background: rgba(0,31,63,.72); backdrop-filter: blur(3px); }
+.action-loader img { width: 92px; height: 92px; border-radius: 50%; border: 3px solid rgba(255,255,255,.35); object-fit: cover; box-shadow: 0 6px 24px rgba(0,0,0,.35); animation: al-pulse 1.6s ease-in-out infinite; }
+.action-loader-bar { width: min(260px, 60vw); height: 5px; border-radius: 6px; background: rgba(255,255,255,.25); overflow: hidden; }
+.action-loader-bar::after { content: ""; display: block; width: 40%; height: 100%; border-radius: 6px; background: var(--navy-accent); animation: al-slide 1.1s ease-in-out infinite; }
+.action-loader-text { color: #fff; font-size: 14px; font-weight: 600; letter-spacing: .3px; }
+@keyframes al-pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.06); } }
+@keyframes al-slide { 0% { transform: translateX(-100%); } 100% { transform: translateX(350%); } }
+/* searchable dropdown - vanilla port (docs/searchable-dropdown.md) */
+.searchable-dropdown { position: relative; }
+.sd-trigger { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 12px; border: 2px solid #ced4da; border-radius: 3px; background: #fff; font-size: 16px; cursor: pointer; transition: all 0.3s; }
+.searchable-dropdown.open .sd-trigger, .sd-trigger:focus { outline: none; border-color: var(--navy-accent, #0074D9); box-shadow: 0 0 0 3px rgba(0,116,217,0.15); }
+.sd-label.sd-placeholder { color: #999; }
+.sd-arrow { font-size: 11px; color: #777; transition: transform 0.2s; }
+.sd-arrow.open { transform: rotate(180deg); }
+.sd-panel { position: absolute; z-index: 50; top: calc(100% + 4px); left: 0; right: 0; min-width: 180px; background: #fff; border: 2px solid var(--navy-accent, #0074D9); border-radius: 3px; box-shadow: 0 6px 20px rgba(0,0,0,0.12); }
+.sd-search { width: 100%; padding: 10px 12px; border: none; border-bottom: 1px solid #eee; font-size: 16px; outline: none; }
+.sd-list { max-height: 220px; overflow-y: auto; }
+.sd-item { padding: 9px 12px; font-size: 14px; cursor: pointer; }
+.sd-item:hover { background: #f1f6fb; }
+.sd-item.selected { background: rgba(0,116,217,0.12); color: var(--navy-accent, #0074D9); font-weight: 600; }
+.sd-empty { padding: 12px; color: #999; font-size: 13px; text-align: center; }
+.sd-host .sd-trigger { padding: 7px 10px; font-size: 14px; }
+.sd-host .sd-label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* developer / contact links */
+.developer-links { display: flex; gap: 12px; flex-wrap: wrap; }
+.dev-link { display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 14px; transition: all 0.3s; }
+.dev-link.whatsapp { background: #25D366; color: white; }
+.dev-link.whatsapp:hover { background: #128C7E; transform: translateY(-2px); }
+.dev-link.telegram { background: #229ED9; color: white; }
+.dev-link.telegram:hover { background: #1a7fb0; transform: translateY(-2px); }
+.dev-link.email { background: var(--navy-accent); color: white; }
+.dev-link.email:hover { background: var(--navy-primary); transform: translateY(-2px); }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; scroll-behavior: auto !important; } }
+
+/* ---- page ---- */
+.navbar { background: linear-gradient(180deg, var(--navy-primary) 0%, var(--navy-dark) 100%); color: white; padding: 0 20px; height: 62px; display: flex; align-items: center; justify-content: space-between; gap: 12px; box-shadow: 0 2px 10px rgba(0,0,0,.15); position: sticky; top: 0; z-index: 20; }
+.navbar-brand { display: flex; align-items: center; gap: 12px; font-weight: 700; font-size: 18px; white-space: nowrap; }
+.navbar-brand img { width: 40px; height: 40px; border-radius: 50%; border: 2px solid rgba(255,255,255,.4); object-fit: cover; }
+.navbar-brand small { display: block; font-size: 11px; font-weight: 500; color: rgba(255,255,255,.7); }
+.health { font-size: 12px; color: rgba(255,255,255,.85); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.health .ok { color: #7CFC9A; } .health .bad { color: #ffb4a8; }
+main { max-width: 1240px; margin: 0 auto; padding: 22px 16px 10px; display: flex; flex-direction: column; gap: 22px; }
+.muted { color: #777; font-size: 13px; }
+.mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+.drop { border: 2px dashed #c9d2dc; border-radius: 3px; padding: 22px; text-align: center; background: #fafbfc; transition: all .3s; }
+.drop.over { border-color: var(--navy-accent); background: rgba(0,116,217,.06); }
+.drop .big { font-size: 34px; color: var(--navy-primary); margin-bottom: 8px; }
+.drop p { color: #555; font-size: 14px; margin-bottom: 12px; }
+.file-meta { margin-top: 10px; font-size: 13px; color: #333; }
+.options-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin: 18px 0; }
+.opt-card { border: 1px solid #e6e6e6; border-radius: 3px; background: #fafbfc; padding: 12px 14px; }
+.opt-card label.small { font-size: 12px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; color: var(--navy-primary); display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
+.swatches { display: flex; gap: 8px; align-items: center; }
+.swatch { width: 26px; height: 26px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,.2); }
+.swatch.on { border-color: var(--navy-primary); }
+.pills { display: flex; flex-wrap: wrap; gap: 8px; }
+.pill { padding: 7px 12px; border-radius: 3px; border: 2px solid #ced4da; background: white; font-size: 14px; cursor: pointer; transition: all .2s; }
+.pill.on { background: var(--navy-primary); color: white; border-color: var(--navy-primary); }
+.progress-wrap { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+.progress-wrap h3 { font-size: 16px; color: #333; display: flex; align-items: center; gap: 10px; min-width: 0; }
+.progress-wrap h3 i { color: var(--navy-accent); }
+.pbar { height: 10px; border-radius: 10px; background: #e9ecef; overflow: hidden; }
+.pbar > div { height: 100%; width: 0; background: linear-gradient(90deg, var(--navy-accent), var(--navy-primary)); border-radius: 10px; transition: width .4s ease; }
+.pbar > div.err { background: var(--danger); }
+details.log summary { cursor: pointer; font-size: 13px; color: #555; margin-top: 10px; }
+pre.log { margin-top: 8px; max-height: 260px; overflow: auto; font-size: 11px; line-height: 1.5; background: #0b1220; color: #cfd8e3; padding: 12px; border-radius: 3px; white-space: pre-wrap; word-break: break-all; }
+.editor { display: grid; grid-template-columns: 340px minmax(0, 1fr); gap: 20px; align-items: start; }
+.player { margin: 0 auto; width: 100%; max-width: 300px; aspect-ratio: 9 / 16; background: #000; border-radius: 3px; overflow: hidden; border: 1px solid #ddd; }
+.player video { width: 100%; height: 100%; object-fit: contain; }
+.player-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.tabs { display: flex; gap: 4px; border-bottom: 2px solid var(--navy-primary); margin-bottom: 14px; flex-wrap: wrap; }
+.tab { padding: 9px 14px; font-size: 14px; font-weight: 600; color: #555; cursor: pointer; border-radius: 3px 3px 0 0; display: flex; align-items: center; gap: 7px; }
+.tab.on { background: var(--navy-primary); color: white; }
+.row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 8px 10px; border: 1px solid #e6e6e6; border-radius: 3px; background: #fafbfc; margin-bottom: 8px; scroll-margin-top: 90px; }
+.row.selected { border-color: var(--navy-accent); box-shadow: 0 0 0 3px rgba(0,116,217,.15); background: #f1f6fb; }
+.row input[type=text], .row textarea { padding: 7px 10px; border: 2px solid #ced4da; border-radius: 3px; font-size: 14px !important; background: white; }
+.row textarea { width: 100%; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; min-height: 96px; }
+.row input.num { width: 5.4rem; text-align: right; font-variant-numeric: tabular-nums; }
+.row input.grow { flex: 1 1 10rem; min-width: 8rem; }
+.row .chip { font-size: 11px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; color: #777; }
+.row .thumb { width: 64px; height: 40px; object-fit: cover; border-radius: 3px; border: 1px solid #ddd; }
+.row .thumb-empty { width: 64px; height: 40px; border-radius: 3px; background: #e9ecef; display: grid; place-items: center; font-size: 10px; color: #777; text-align: center; line-height: 1.1; }
+.row .right { margin-left: auto; display: flex; gap: 4px; }
+.row .sd-host { min-width: 130px; }
+.credit { font-size: 11px; color: #777; margin: -4px 0 8px 4px; }
+.group-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 14px 0 8px; }
+.group-head h4 { font-size: 13px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; color: var(--navy-primary); display: flex; align-items: center; gap: 7px; }
+.empty { color: #777; font-size: 13px; padding: 4px 2px 10px; }
+.usage { font-size: 12px; color: #555; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+.panel-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding-top: 14px; border-top: 1px solid #eee; margin-top: 8px; }
+.refine { margin-top: 14px; padding: 14px; border: 1px solid #e6e6e6; border-radius: 3px; background: #fafbfc; }
+.refine h4 { font-size: 14px; color: var(--navy-primary); display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.refine textarea { width: 100%; min-height: 64px; padding: 10px 12px; border: 2px solid #ced4da; border-radius: 3px; font-size: 14px !important; font-family: inherit; background: white; }
+.refine .bar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 8px; }
+.refine .hint { font-size: 12px; color: #777; }
+/* timeline */
+.tl-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 10px; }
+.tl-toolbar .time { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 13px; color: #333; min-width: 120px; }
+.tl-toolbar input[type=range] { width: 120px; }
+.tl { border: 1px solid #dfe3e8; border-radius: 3px; background: white; display: grid; grid-template-columns: 118px minmax(0, 1fr); overflow: hidden; user-select: none; }
+.tl-labels { background: #f4f6f8; border-right: 1px solid #dfe3e8; }
+.tl-label { height: 34px; display: flex; align-items: center; gap: 7px; padding: 0 10px; font-size: 12px; font-weight: 600; color: #333; border-bottom: 1px solid #e9ecef; white-space: nowrap; }
+.tl-label i { width: 14px; text-align: center; }
+.tl-label.ruler { height: 26px; background: #e9ecef; color: #555; }
+.tl-scroll { overflow-x: auto; overflow-y: hidden; position: relative; }
+.tl-inner { position: relative; }
+.tl-ruler { height: 26px; background: #e9ecef; position: relative; border-bottom: 1px solid #dfe3e8; cursor: pointer; }
+.tl-tick { position: absolute; top: 0; height: 100%; border-left: 1px solid #bfc7d1; font-size: 10px; color: #555; padding-left: 3px; line-height: 26px; }
+.tl-tick.minor { height: 8px; top: 18px; line-height: 0; border-left-color: #d3d9e0; }
+.tl-track { height: 34px; position: relative; border-bottom: 1px solid #e9ecef; background-image: linear-gradient(90deg, rgba(0,0,0,.035) 1px, transparent 1px); }
+.tl-block { position: absolute; top: 5px; height: 24px; border-radius: 3px; color: white; font-size: 11px; font-weight: 600; line-height: 24px; padding: 0 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: grab; box-shadow: 0 1px 2px rgba(0,0,0,.25); }
+.tl-block.selected { outline: 2px solid #111; outline-offset: 1px; z-index: 3; }
+.tl-block.point { width: 12px !important; padding: 0; border-radius: 50%; top: 11px; height: 12px; }
+.tl-block.cut { background: repeating-linear-gradient(135deg, rgba(234,67,53,.85) 0 6px, rgba(234,67,53,.55) 6px 12px); }
+.tl-block.dragging { cursor: grabbing; opacity: .85; }
+.tl-cutshade { position: absolute; top: 0; bottom: 0; background: rgba(234,67,53,.12); pointer-events: none; z-index: 1; }
+.tl-playhead { position: absolute; top: 0; bottom: 0; width: 2px; background: #ea4335; z-index: 4; pointer-events: none; }
+.tl-playhead::before { content: ""; position: absolute; top: 0; left: -5px; border: 6px solid transparent; border-top: 8px solid #ea4335; }
+.tl-mark { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--navy-accent); z-index: 2; pointer-events: none; }
+.tl-mark::after { content: attr(data-l); position: absolute; top: 0; left: 3px; font-size: 10px; font-weight: 700; color: var(--navy-accent); }
+.tl-help { font-size: 12px; color: #777; margin-top: 8px; }
+kbd { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 11px; background: #eef1f4; border: 1px solid #cfd6dd; border-bottom-width: 2px; border-radius: 3px; padding: 1px 5px; }
+.add-menu { position: relative; }
+.add-menu .menu { position: absolute; top: calc(100% + 4px); left: 0; z-index: 30; background: white; border: 2px solid var(--navy-accent); border-radius: 3px; box-shadow: 0 6px 20px rgba(0,0,0,.12); min-width: 200px; padding: 4px; }
+.add-menu .menu button { display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px 12px; background: none; border: none; text-align: left; font-size: 14px; cursor: pointer; border-radius: 3px; }
+.add-menu .menu button:hover { background: #f1f6fb; }
+.add-menu .menu button i { width: 16px; color: var(--navy-primary); }
+.contact { text-align: center; padding: 6px 0 20px; }
+.contact p.t { font-size: 14px; font-weight: 700; color: var(--navy-primary); margin-bottom: 10px; }
+.contact .developer-links { justify-content: center; }
+.contact .dev { font-size: 12px; color: #777; margin-top: 12px; }
+#toasts { position: fixed; bottom: 16px; right: 16px; left: 16px; display: flex; flex-direction: column; gap: 8px; z-index: 2500; pointer-events: none; }
+.toast { pointer-events: auto; margin-left: auto; max-width: 420px; padding: 12px 16px; border-radius: 3px; font-size: 14px; box-shadow: 0 4px 16px rgba(0,0,0,.2); color: white; background: var(--navy-primary); border-left: 4px solid var(--navy-accent); }
+.toast.error { background: #b3261e; border-left-color: #ffb4a8; }
+.toast.ok { background: #1e7e34; border-left-color: #9be7ac; }
+.hidden { display: none !important; }
+@media (max-width: 900px) { .editor { grid-template-columns: 1fr; } .navbar-brand small { display: none; } .health { display: none; } .row .sd-host { min-width: 110px; } }
+</style>
+</head>
+<body>
+
+<div id="topbar" class="top-loadbar hidden"><span></span></div>
+<div id="overlay" class="action-loader hidden" role="status" aria-live="polite" aria-busy="true">
+  <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEiGXxCe0WNNedmFqSWeF761f7Kshhc-NP5ChRQKz9fr97cO8VaarvD0KlCwqHojJVBWv-RAxfOqMI5rD4H78KnARyOc6QgwL1nRRFWf5xNQ1d9F9HfAoLPPGlTyP0GwNl4n-INMEsWLQ4Y7zJtz5bOdAnc2ePH9-uCRgshlo6BsS6gJEz6fhrxL-5U5O3sX/s160/channels4_profile.jpg" alt="">
+  <div class="action-loader-bar"></div>
+  <span class="action-loader-text" id="overlayText">Processing…</span>
+</div>
+
+<header class="navbar">
+  <div class="navbar-brand">
+    <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEiGXxCe0WNNedmFqSWeF761f7Kshhc-NP5ChRQKz9fr97cO8VaarvD0KlCwqHojJVBWv-RAxfOqMI5rD4H78KnARyOc6QgwL1nRRFWf5xNQ1d9F9HfAoLPPGlTyP0GwNl4n-INMEsWLQ4Y7zJtz5bOdAnc2ePH9-uCRgshlo6BsS6gJEz6fhrxL-5U5O3sX/s160/channels4_profile.jpg" alt="">
+    <div>AI Shorts Editor<small>Rameez Scripts</small></div>
+  </div>
+  <div id="health" class="health"><i class="fa-solid fa-circle-notch fa-spin"></i> checking backend…</div>
+</header>
+
+<main>
+  <!-- 1 · upload -->
+  <section id="zUpload" class="data-section">
+    <div class="section-header">
+      <h2><i class="fa-solid fa-cloud-arrow-up"></i> Upload a vertical short</h2>
+      <span class="muted">mp4 · mov · webm · ≤ <span id="maxMb">200</span> MB</span>
+    </div>
+    <div id="drop" class="drop">
+      <div class="big"><i class="fa-solid fa-film"></i></div>
+      <p>Drop your video here, or pick a file</p>
+      <div class="form-group" style="margin:0 auto;max-width:520px">
+        <input id="file" type="file" class="file-input" accept=".mp4,.mov,.webm,video/mp4,video/quicktime,video/webm">
+      </div>
+      <div id="fileMeta" class="file-meta hidden"></div>
+    </div>
+
+    <div class="options-grid">
+      <label class="toggle-row"><span><b>AI B-roll</b><small>cutaway images &amp; clips for what's being said</small></span><input id="optBroll" type="checkbox" class="toggle" checked></label>
+      <label class="toggle-row"><span><b>Camera zooms</b><small>punch zooms, slow push-ins, pull-outs on beats</small></span><input id="optZooms" type="checkbox" class="toggle" checked></label>
+      <label class="toggle-row"><span><b>Animated stickers</b><small>25 badges: question, fire, money, wow, subscribe…</small></span><input id="optStickers" type="checkbox" class="toggle" checked></label>
+      <label class="toggle-row"><span><b>Sound effects</b><small>whoosh, pop, ding, boom, riser, cash, drum, glitch…</small></span><input id="optSfx" type="checkbox" class="toggle" checked></label>
+      <label class="toggle-row"><span><b>Voice emphasis</b><small>louder / brighter / deeper / softer on marked moments</small></span><input id="optVoice" type="checkbox" class="toggle" checked></label>
+      <label class="toggle-row"><span><b>Voice cleanup (ENC)</b><small>RNNoise background noise removal, de-esser, compressor</small></span><input id="optCleanup" type="checkbox" class="toggle" checked></label>
+      <label class="toggle-row"><span><b>Code windows</b><small>typed-out code when you explain code or commands</small></span><input id="optCode" type="checkbox" class="toggle" checked></label>
+      <label class="toggle-row"><span><b>Word highlight captions</b><small>the spoken word lights up in the accent colour</small></span><input id="optKaraoke" type="checkbox" class="toggle" checked></label>
+      <label class="toggle-row"><span><b>Auto jump-cuts</b><small>remove silences longer than 1 s (you can still cut manually)</small></span><input id="optJumpcuts" type="checkbox" class="toggle"></label>
+      <div class="opt-card">
+        <label class="small"><i class="fa-solid fa-palette"></i> Accent colour</label>
+        <div class="swatches">
+          <input id="optColor" type="color" value="#FFD400" style="width:40px;height:32px;border:1px solid #ced4da;border-radius:3px;padding:2px;background:white;cursor:pointer">
+          <input id="optColorHex" type="text" value="#FFD400" maxlength="7" class="filter-input mono" style="width:7.2rem;padding:6px 10px">
+          <span class="swatch on" data-c="#FFD400" style="background:#FFD400"></span><span class="swatch" data-c="#39FF14" style="background:#39FF14"></span><span class="swatch" data-c="#2D9BFF" style="background:#2D9BFF"></span><span class="swatch" data-c="#FF2D55" style="background:#FF2D55"></span><span class="swatch" data-c="#FFFFFF" style="background:#FFFFFF"></span>
+        </div>
+      </div>
+      <div class="opt-card">
+        <label class="small"><i class="fa-solid fa-font"></i> Caption font</label>
+        <div id="fontPills" class="pills">
+          <span class="pill on" data-f="montserrat" style="font-family:Montserrat,sans-serif;font-weight:800">Montserrat</span>
+          <span class="pill" data-f="anton" style="font-family:Anton,Impact,sans-serif">Anton</span>
+          <span class="pill" data-f="impact" style="font-family:Impact,'Anton',sans-serif">Impact</span>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;align-items:center;gap:12px">
+      <button id="btnGenerate" class="btn btn-primary" disabled><i class="fa-solid fa-wand-magic-sparkles"></i> Generate</button>
+      <span class="muted">Whisper → editorial brief → edit plan → media → one ffmpeg render. Re-renders after editing are free.</span>
+    </div>
+  </section>
+
+  <!-- 2 · progress -->
+  <section id="zProgress" class="data-section hidden">
+    <div class="progress-wrap">
+      <h3><i id="pIcon" class="fa-solid fa-circle-notch fa-spin"></i> <span id="pStep">Queued…</span></h3>
+      <span id="pPct" class="mono">0%</span>
+    </div>
+    <div class="pbar"><div id="pBar"></div></div>
+    <details id="logBox" class="log"><summary><i class="fa-solid fa-terminal"></i> Live log</summary><pre id="pLog" class="log"></pre></details>
+  </section>
+
+  <!-- 3 · editor -->
+  <section id="zResult" class="hidden" style="display:flex;flex-direction:column;gap:20px">
+    <div class="editor">
+      <div class="data-section">
+        <div class="section-header"><h2><i class="fa-solid fa-clapperboard"></i> Result</h2></div>
+        <div class="player"><video id="video" controls playsinline preload="metadata"></video></div>
+        <div class="player-actions">
+          <a id="btnDownload" class="btn btn-primary" href="#" download style="flex:1 1 100%"><i class="fa-solid fa-download"></i> Download MP4</a>
+          <button id="btnNew" class="btn btn-secondary" style="flex:1"><i class="fa-solid fa-plus"></i> New video</button>
+          <button id="btnDelete" class="btn btn-danger" title="Delete this job and its files"><i class="fa-solid fa-trash"></i></button>
+        </div>
+        <p id="jobMeta" class="muted" style="margin-top:10px"></p>
+        <div class="refine">
+          <h4><i class="fa-solid fa-robot"></i> Ask AI to refine</h4>
+          <textarea id="refineText" placeholder="e.g. make the captions between 5 and 12 seconds punchier, swap the first b-roll for a money scene, add a zoom on the price"></textarea>
+          <div class="bar">
+            <label class="muted" style="display:flex;align-items:center;gap:8px;cursor:pointer"><input id="refineRange" type="checkbox" class="toggle"> only between In and Out</label>
+            <button id="btnRefine" class="btn btn-accent btn-sm"><i class="fa-solid fa-wand-magic-sparkles"></i> Refine</button>
+          </div>
+          <div class="hint">One LLM call, keeps everything you didn't mention. Set In / Out on the timeline (<kbd>I</kbd> / <kbd>O</kbd>) to limit the change.</div>
+        </div>
+      </div>
+
+      <div class="data-section">
+        <div class="section-header">
+          <h2><i class="fa-solid fa-sliders"></i> Edit plan</h2>
+          <div id="usage" class="usage"></div>
+        </div>
+        <div class="tabs">
+          <span class="tab on" data-tab="captions"><i class="fa-solid fa-closed-captioning"></i> Captions</span>
+          <span class="tab" data-tab="overlays"><i class="fa-solid fa-layer-group"></i> Text &amp; Stickers</span>
+          <span class="tab" data-tab="broll"><i class="fa-solid fa-photo-film"></i> B-roll &amp; Zooms</span>
+          <span class="tab" data-tab="code"><i class="fa-solid fa-code"></i> Code &amp; Cuts</span>
+          <span class="tab" data-tab="sfx"><i class="fa-solid fa-music"></i> SFX &amp; Voice</span>
+        </div>
+        <div id="panel"></div>
+        <div class="panel-actions">
+          <button id="btnRerender" class="btn btn-primary"><i class="fa-solid fa-rotate"></i> Re-render</button>
+          <button id="btnReset" class="btn btn-secondary"><i class="fa-solid fa-clock-rotate-left"></i> Reset to AI plan</button>
+          <span class="muted">Re-render = subtitles + ffmpeg only. No LLM cost.</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="data-section">
+      <div class="section-header">
+        <h2><i class="fa-solid fa-timeline"></i> Timeline</h2>
+        <span class="muted">drag to move · drag edges to trim · double-click a track to add · <kbd>Del</kbd> removes · <kbd>I</kbd>/<kbd>O</kbd> mark In/Out · <kbd>Space</kbd> play</span>
+      </div>
+      <div class="tl-toolbar">
+        <button id="tlPlay" class="btn btn-primary btn-sm"><i class="fa-solid fa-play"></i></button>
+        <span id="tlTime" class="time">0.00 / 0.00 s</span>
+        <div class="add-menu">
+          <button id="tlAdd" class="btn btn-accent btn-sm"><i class="fa-solid fa-plus"></i> Add</button>
+          <div id="tlAddMenu" class="menu hidden">
+            <button data-add="captions"><i class="fa-solid fa-closed-captioning"></i> Caption</button>
+            <button data-add="headlines"><i class="fa-solid fa-heading"></i> Headline</button>
+            <button data-add="badges"><i class="fa-solid fa-tag"></i> Neon badge</button>
+            <button data-add="stickers"><i class="fa-solid fa-face-grin-stars"></i> Sticker</button>
+            <button data-add="broll"><i class="fa-solid fa-photo-film"></i> B-roll</button>
+            <button data-add="code"><i class="fa-solid fa-code"></i> Code window</button>
+            <button data-add="zooms"><i class="fa-solid fa-magnifying-glass-plus"></i> Zoom</button>
+            <button data-add="sfx"><i class="fa-solid fa-music"></i> Sound effect</button>
+            <button data-add="voice"><i class="fa-solid fa-microphone-lines"></i> Voice effect</button>
+            <button data-add="cuts"><i class="fa-solid fa-scissors"></i> Cut (In → Out)</button>
+          </div>
+        </div>
+        <button id="tlIn" class="btn btn-secondary btn-sm" title="Set In point (I)"><i class="fa-solid fa-arrow-right-to-bracket"></i> In</button>
+        <button id="tlOut" class="btn btn-secondary btn-sm" title="Set Out point (O)"><i class="fa-solid fa-arrow-right-from-bracket"></i> Out</button>
+        <button id="tlCut" class="btn btn-danger btn-sm" title="Remove In → Out from the video"><i class="fa-solid fa-scissors"></i> Cut In→Out</button>
+        <button id="tlDel" class="btn btn-secondary btn-sm" title="Delete selected (Del)"><i class="fa-solid fa-trash"></i></button>
+        <span class="muted" style="margin-left:auto;display:flex;align-items:center;gap:6px"><i class="fa-solid fa-magnifying-glass"></i><input id="tlZoom" type="range" min="20" max="140" value="48"></span>
+      </div>
+      <div class="tl">
+        <div id="tlLabels" class="tl-labels"></div>
+        <div id="tlScroll" class="tl-scroll"><div id="tlInner" class="tl-inner"></div></div>
+      </div>
+      <div class="tl-help">Times are in the source video. Cuts (red) are removed on the next re-render; the player shows the last rendered version.</div>
+    </div>
+  </section>
+</main>
+
+<footer class="contact">
+  <p class="t"><i class="fa-solid fa-envelope-open-text"></i> Let's Work Together</p>
+  <div class="developer-links">
+    <a class="dev-link whatsapp" href="https://whatsapp.rameezscripts.com" target="_blank" rel="noopener"><i class="fa-brands fa-whatsapp"></i> WhatsApp</a>
+    <a class="dev-link telegram" href="https://t.me/rameezscripts" target="_blank" rel="noopener"><i class="fa-brands fa-telegram"></i> Telegram</a>
+    <a class="dev-link email" href="mailto:Contact@rameezscripts.com"><i class="fa-solid fa-envelope"></i> Contact@rameezscripts.com</a>
+  </div>
+  <p class="dev">Developed by Mohammad Rameez Imdad (Rameez Scripts)</p>
+</footer>
+<div id="toasts"></div>
+
+<script>
+(() => {
+  'use strict';
+  const $ = (s, r = document) => r.querySelector(s);
+  const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+  const POLL_MS = 1500, ALLOWED = ['mp4', 'mov', 'webm'];
+  const DEFAULT_STICKERS = ['question_marks', 'user_question', 'money', 'fire', 'warning', 'arrow_down', 'check', 'cross', 'wow', 'subscribe', 'new', 'tip', 'hundred', 'free', 'like', 'clock', 'rocket', 'idea', 'laugh', 'code', 'star', 'omg', 'save', 'stop', 'wait'];
+  const DEFAULT_SFX = ['whoosh', 'pop', 'ding', 'boom', 'riser', 'click', 'cash', 'notification', 'drum', 'bass_drop', 'glitch', 'typing', 'swoosh_out'];
+  const POSITIONS = ['top', 'top_left', 'top_right'], COLORS = ['red', 'green', 'blue'], VOICE_FX = ['boost', 'excited', 'deep', 'soft'];
+  const MOTIONS = ['zoom_in', 'zoom_out', 'pan_left', 'pan_right', 'none'], ZOOM_KINDS = ['punch', 'in', 'out'];
+  const LANGS = ['python', 'javascript', 'typescript', 'php', 'sql', 'bash', 'html', 'css', 'json', 'generic'];
+  const NEON = { red: '#FF2D55', green: '#39FF14', blue: '#2D9BFF' };
+  const LISTS = { captions: 'captions', headlines: 'overlays', badges: 'overlays', stickers: 'overlays', broll: 'broll', zooms: 'broll', code: 'code', cuts: 'code', sfx: 'sfx', voice: 'sfx' };
+  const TRACKS = [
+    { key: 'cuts', label: 'Cuts', icon: 'fa-scissors', color: '#ea4335', s: 'start', e: 'end', txt: () => 'cut' },
+    { key: 'captions', label: 'Captions', icon: 'fa-closed-captioning', color: '#0074D9', s: 'start', e: 'end', txt: x => x.text },
+    { key: 'headlines', label: 'Headlines', icon: 'fa-heading', color: '#7c3aed', s: 'start', e: 'end', txt: x => x.main },
+    { key: 'badges', label: 'Badges', icon: 'fa-tag', color: '#b91c1c', s: 'start', e: 'end', txt: x => x.text },
+    { key: 'stickers', label: 'Stickers', icon: 'fa-face-grin-stars', color: '#d97706', s: 'start', e: 'end', txt: x => x.kind },
+    { key: 'broll', label: 'B-roll', icon: 'fa-photo-film', color: '#059669', s: 'start', e: 'end', txt: x => `${x.mode} · ${x.query}` },
+    { key: 'code', label: 'Code', icon: 'fa-code', color: '#0284c7', s: 'start', e: 'end', txt: x => x.title },
+    { key: 'zooms', label: 'Zooms', icon: 'fa-magnifying-glass-plus', color: '#db2777', s: 'at', e: 'end', txt: x => `${x.kind} ${x.scale}` },
+    { key: 'sfx', label: 'SFX', icon: 'fa-music', color: '#ea580c', s: 'at', e: null, txt: x => x.kind },
+    { key: 'voice', label: 'Voice', icon: 'fa-microphone-lines', color: '#0d9488', s: 'start', e: 'end', txt: x => x.effect },
+  ];
+
+  const st = { file: null, job: null, plan: null, rendered: null, poll: null, tab: 'captions', mode: 'generate', maxMb: 200, health: null,
+               sel: null, inP: null, outP: null, pps: 48, reads: 0, dropdowns: [] };
+  const el = {
+    drop: $('#drop'), file: $('#file'), fileMeta: $('#fileMeta'), gen: $('#btnGenerate'), zUpload: $('#zUpload'), zProgress: $('#zProgress'), zResult: $('#zResult'),
+    pStep: $('#pStep'), pPct: $('#pPct'), pBar: $('#pBar'), pLog: $('#pLog'), pIcon: $('#pIcon'), logBox: $('#logBox'),
+    video: $('#video'), dl: $('#btnDownload'), usage: $('#usage'), panel: $('#panel'), jobMeta: $('#jobMeta'),
+    color: $('#optColor'), colorHex: $('#optColorHex'), rerender: $('#btnRerender'), reset: $('#btnReset'),
+    topbar: $('#topbar'), overlay: $('#overlay'), overlayText: $('#overlayText'),
+    tlLabels: $('#tlLabels'), tlScroll: $('#tlScroll'), tlInner: $('#tlInner'), tlTime: $('#tlTime'), tlPlay: $('#tlPlay'), tlZoom: $('#tlZoom'),
+    refineText: $('#refineText'), refineRange: $('#refineRange'), btnRefine: $('#btnRefine'),
+  };
+
+  // ---------- helpers
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const num = v => Math.round(Math.max(0, Number(v) || 0) * 100) / 100;
+  const fmtT = s => num(s).toFixed(2);
+  const fmtMb = b => (b / 1048576).toFixed(1) + ' MB';
+  const money = v => '$' + (Number(v) || 0).toFixed(4);
+  const show = (node, on) => node.classList.toggle('hidden', !on);
+  const dur = () => Number(st.job && st.job.duration) || (st.rendered && st.rendered.duration) || 0;
+  const label = v => String(v).replace(/_/g, ' ');
+
+  function toast(msg, kind = 'error', ms = 6000) {
+    const t = document.createElement('div');
+    t.className = 'toast ' + kind; t.textContent = msg; t.onclick = () => t.remove();
+    $('#toasts').appendChild(t); setTimeout(() => t.remove(), ms);
+  }
+  // two-signal rule: reads -> thin top bar, writes -> branded overlay
+  const readStart = () => { st.reads++; show(el.topbar, true); };
+  const readEnd = () => { st.reads = Math.max(0, st.reads - 1); show(el.topbar, st.reads > 0); };
+  const runAction = (verb, p) => { el.overlayText.textContent = verb; show(el.overlay, true); return p.finally(() => show(el.overlay, false)); };
+
+  async function api(url, opt = {}, read = true) {
+    read && readStart();
+    try {
+      let r;
+      try { r = await fetch(url, opt); } catch (e) { throw new Error('Cannot reach the backend - is the server running?'); }
+      let data = null; try { data = await r.json(); } catch (_) { /* non-json */ }
+      if (!r.ok) { const d = data && data.detail; throw new Error(typeof d === 'string' ? d : d ? JSON.stringify(d) : `${r.status} ${r.statusText}`); }
+      return data;
+    } finally { read && readEnd(); }
+  }
+
+  // searchable dropdown (vanilla port from docs/searchable-dropdown.md)
+  function sdInit(host, { options = [], value = '', placeholder = 'Select…', onChange = () => {} }) {
+    let open = false, val = value;
+    host.classList.add('searchable-dropdown');
+    host.innerHTML = '<div class="sd-trigger" tabindex="0"><span class="sd-label"></span><i class="fas fa-chevron-down sd-arrow"></i></div>' +
+      '<div class="sd-panel" hidden><input class="sd-search" type="text" placeholder="Search…"><div class="sd-list"></div></div>';
+    const trig = host.querySelector('.sd-trigger'), panel = host.querySelector('.sd-panel'), search = host.querySelector('.sd-search'),
+          list = host.querySelector('.sd-list'), lab = host.querySelector('.sd-label'), arrow = host.querySelector('.sd-arrow');
+    const paint = () => { const o = options.find(o => o.value === val); lab.textContent = o ? o.label : placeholder; lab.classList.toggle('sd-placeholder', !o); };
+    const draw = (qy = '') => { list.innerHTML = options.filter(o => o.label.toLowerCase().includes(qy.toLowerCase()))
+      .map(o => '<div class="sd-item' + (o.value === val ? ' selected' : '') + '" data-v="' + esc(o.value) + '">' + esc(o.label) + '</div>').join('') || '<div class="sd-empty">No results</div>'; };
+    const toggle = s => { open = s ?? !open; panel.hidden = !open; host.classList.toggle('open', open); arrow.classList.toggle('open', open); if (open) { draw(); search.value = ''; search.focus(); } };
+    trig.addEventListener('click', () => toggle());
+    trig.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); } });
+    search.addEventListener('input', e => draw(e.target.value));
+    list.addEventListener('click', e => { const it = e.target.closest('.sd-item'); if (!it) return; val = it.dataset.v; paint(); toggle(false); onChange(val); });
+    const outside = e => { if (!host.contains(e.target)) toggle(false); };
+    document.addEventListener('click', outside);
+    paint();
+    return { get value() { return val; }, set value(v) { val = v; paint(); }, destroy() { document.removeEventListener('click', outside); } };
+  }
+
+  // ---------- health
+  api('/api/health').then(h => {
+    st.health = h; st.maxMb = h.limits.max_upload_mb; $('#maxMb').textContent = st.maxMb;
+    const bad = [];
+    h.ffmpeg.ffmpeg || bad.push('ffmpeg missing'); h.ffmpeg.subtitles || bad.push('no libass');
+    h.llm.key_set || bad.push('OPENAI_API_KEY not set'); h.assets.stickers.length || bad.push('no stickers (run scripts/setup_assets.py)');
+    const broll = h.media ? (h.media.stock ? `b-roll ${h.media.stock}` : `b-roll AI ${h.media.image_model}`) : '';
+    $('#health').innerHTML = bad.length
+      ? `<span class="bad"><i class="fa-solid fa-triangle-exclamation"></i> ${esc(bad.join(' · '))}</span>`
+      : `<i class="fa-solid fa-circle ok" style="font-size:8px;vertical-align:middle"></i> whisper ${esc(h.whisper.model)} · ${esc(h.llm.model)} · ${esc(broll)} · ffmpeg ok`;
+    bad.length && toast(bad.join(' · '), 'error', 10000);
+  }).catch(e => { $('#health').innerHTML = `<span class="bad"><i class="fa-solid fa-triangle-exclamation"></i> ${esc(e.message)}</span>`; });
+
+  // ---------- upload
+  function pickFile(f) {
+    if (!f) return;
+    const ext = (f.name.split('.').pop() || '').toLowerCase();
+    if (!ALLOWED.includes(ext)) return toast(`Only ${ALLOWED.join(', ')} files are accepted`);
+    if (f.size > st.maxMb * 1048576) return toast(`File is ${fmtMb(f.size)} - limit is ${st.maxMb} MB`);
+    st.file = f;
+    el.fileMeta.innerHTML = `<i class="fa-solid fa-file-video" style="color:var(--navy-primary)"></i> <b>${esc(f.name)}</b> · ${fmtMb(f.size)}`;
+    show(el.fileMeta, true); el.gen.disabled = false;
+  }
+  function clearFile() { st.file = null; el.file.value = ''; show(el.fileMeta, false); el.gen.disabled = true; }
+  el.file.addEventListener('change', () => pickFile(el.file.files[0]));
+  ['dragenter', 'dragover'].forEach(ev => el.drop.addEventListener(ev, e => { e.preventDefault(); el.drop.classList.add('over'); }));
+  ['dragleave', 'drop'].forEach(ev => el.drop.addEventListener(ev, e => { e.preventDefault(); el.drop.classList.remove('over'); }));
+  el.drop.addEventListener('drop', e => { const f = e.dataTransfer.files[0]; if (f) { pickFile(f); try { el.file.files = e.dataTransfer.files; } catch (_) {} } });
+
+  const setColor = hex => {
+    if (!/^#[0-9a-f]{6}$/i.test(hex)) return;
+    el.color.value = hex; el.colorHex.value = hex.toUpperCase();
+    $$('.swatch').forEach(s => s.classList.toggle('on', s.dataset.c.toLowerCase() === hex.toLowerCase()));
+  };
+  el.color.addEventListener('input', () => setColor(el.color.value));
+  el.colorHex.addEventListener('change', () => setColor(el.colorHex.value.startsWith('#') ? el.colorHex.value : '#' + el.colorHex.value));
+  $('.swatches').addEventListener('click', e => e.target.dataset.c && setColor(e.target.dataset.c));
+  $('#fontPills').addEventListener('click', e => { const p = e.target.closest('.pill'); if (!p) return; $$('#fontPills .pill').forEach(x => x.classList.toggle('on', x === p)); });
+  const font = () => $('#fontPills .pill.on').dataset.f;
+
+  el.gen.addEventListener('click', async () => {
+    if (!st.file) return;
+    const fd = new FormData();
+    fd.append('file', st.file); fd.append('caption_font', font()); fd.append('accent_color', el.color.value.toUpperCase());
+    [['enable_stickers', '#optStickers'], ['enable_sfx', '#optSfx'], ['enable_voice', '#optVoice'], ['enable_broll', '#optBroll'], ['enable_zooms', '#optZooms'],
+     ['enable_code', '#optCode'], ['enable_cleanup', '#optCleanup'], ['enable_jumpcuts', '#optJumpcuts']].forEach(([k, s]) => fd.append(k, $(s).checked));
+    fd.append('caption_style', $('#optKaraoke').checked ? 'karaoke' : 'chunk');
+    el.gen.disabled = true; el.gen.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Uploading…';
+    st.mode = 'generate'; show(el.zResult, false);
+    try {
+      st.job = await runAction('Uploading…', api('/api/jobs', { method: 'POST', body: fd }, false));
+      el.pLog.textContent = ''; showProgress(st.job); startPoll();
+      toast('Uploaded - processing started', 'ok', 2500);
+    } catch (e) { toast(e.message); el.gen.disabled = false; }
+    finally { el.gen.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> Generate'; }
+  });
+
+  // ---------- progress / polling
+  function showProgress(j) {
+    show(el.zProgress, true);
+    const running = j.status === 'queued' || j.status === 'running';
+    el.pStep.textContent = j.status === 'queued' ? 'Queued…' : j.status === 'error' ? 'Failed' : j.status === 'done' ? 'Done' : j.step;
+    el.pPct.textContent = j.progress + '%'; el.pBar.style.width = j.progress + '%'; el.pBar.classList.toggle('err', j.status === 'error');
+    el.pIcon.className = 'fa-solid ' + (running ? 'fa-circle-notch fa-spin' : j.status === 'error' ? 'fa-circle-xmark' : 'fa-circle-check');
+    const atBottom = el.pLog.scrollHeight - el.pLog.scrollTop - el.pLog.clientHeight < 24;
+    el.pLog.textContent = (j.log || []).join('\n'); atBottom && (el.pLog.scrollTop = el.pLog.scrollHeight);
+  }
+  function stopPoll() { st.poll && clearInterval(st.poll); st.poll = null; }
+  function startPoll() {
+    stopPoll();
+    const tick = async () => {
+      if (!st.job) return stopPoll();
+      try {
+        const j = await api(`/api/jobs/${st.job.job_id}`); st.job = j; showProgress(j);
+        if (j.status === 'done') { stopPoll(); await loadResult(); }
+        else if (j.status === 'error') { stopPoll(); el.logBox.open = true; toast(j.error || 'Job failed', 'error', 12000); el.gen.disabled = !st.file; el.rerender.disabled = false; el.btnRefine.disabled = false; }
+      } catch (e) { stopPoll(); toast(e.message); el.gen.disabled = !st.file; el.rerender.disabled = false; el.btnRefine.disabled = false; }
+    };
+    tick(); st.poll = setInterval(tick, POLL_MS);
+  }
+
+  // ---------- result
+  async function loadResult() {
+    const id = st.job.job_id;
+    try { st.plan = await api(`/api/jobs/${id}/plan`); } catch (e) { return toast(e.message); }
+    st.rendered = JSON.parse(JSON.stringify(st.plan)); st.rendered.duration = st.job.duration;
+    el.video.src = `/api/jobs/${id}/output?v=${Date.now()}`; el.dl.href = `/api/jobs/${id}/output?download=1`;
+    el.jobMeta.innerHTML = `<i class="fa-solid fa-file-video"></i> ${esc(st.job.filename)} · ${fmtT(st.job.duration)}s · lang ${esc(st.job.language || '?')} · job <span class="mono">${id}</span>`;
+    renderUsage(); renderPanel(); renderTimeline();
+    show(el.zResult, true); el.rerender.disabled = false; el.btnRefine.disabled = false; el.gen.disabled = !st.file;
+    toast(st.mode === 'generate' ? 'Your short is ready' : st.mode === 'refine' ? 'Refined and re-rendered' : 'Re-render done', 'ok', 2500);
+    st.mode === 'generate' && el.zResult.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  function renderUsage() {
+    const u = st.job.usage || {};
+    const base = u.calls ? `${u.calls} LLM call${u.calls > 1 ? 's' : ''} · ${u.prompt_tokens.toLocaleString()} in / ${u.completion_tokens.toLocaleString()} out · est. ${money(u.cost_usd)} · ${esc(u.model)}` : 'no LLM tokens used';
+    el.usage.innerHTML = base + (u.media_calls ? ` · ${u.media_calls} AI media ≈ ${money(u.media_cost_usd)}` : '');
+  }
+
+  // ---------- inspector panel
+  const numInp = (l, i, f, v) => `<input class="num" type="number" step="0.01" min="0" inputmode="decimal" value="${fmtT(v)}" data-l="${l}" data-i="${i}" data-f="${f}" data-t="num" aria-label="${f}">`;
+  const txtInp = (l, i, f, v, cls = 'grow') => `<input class="${cls}" type="text" value="${esc(v)}" data-l="${l}" data-i="${i}" data-f="${f}" data-t="str">`;
+  const sdSlot = (l, i, f, v, opts) => `<div class="sd-host" data-l="${l}" data-i="${i}" data-f="${f}" data-v="${esc(v)}" data-opts="${esc(opts.join('|'))}"></div>`;
+  const seekBtn = t => `<button class="btn btn-secondary btn-xs mono" data-seek="${num(t)}" title="Seek"><i class="fa-solid fa-play"></i> ${fmtT(t)}</button>`;
+  const delBtn = (l, i) => `<span class="right"><button class="action-icon delete-icon" data-del="${l}:${i}" title="Remove" aria-label="Remove"><i class="fa-solid fa-xmark"></i></button></span>`;
+  const addBtn = (l, t) => `<button class="btn btn-accent btn-xs" data-add="${l}"><i class="fa-solid fa-plus"></i> ${t}</button>`;
+  const arrow = `<i class="fa-solid fa-arrow-right-long" style="color:#999;font-size:12px"></i>`;
+  const empty = t => `<p class="empty">${t}</p>`;
+  const head = (icon, t, extra = '') => `<div class="group-head"><h4><i class="fa-solid ${icon}"></i> ${t}</h4>${extra}</div>`;
+  const rowOpen = (l, i) => `<div class="row${st.sel && st.sel.l === l && st.sel.i === i ? ' selected' : ''}" data-row="${l}:${i}">`;
+  const colorPills = (i, v) => `<span class="pills">${COLORS.map(c => `<span class="pill" data-l="badges" data-i="${i}" data-f="color" data-set="${c}" style="padding:4px 9px;font-size:12px;${c === v ? `background:${NEON[c]};border-color:${NEON[c]};color:#111` : ''}">${c}</span>`).join('')}</span>`;
+  const stickerKinds = () => (st.health && st.health.assets && st.health.assets.stickers.length ? st.health.assets.stickers : DEFAULT_STICKERS);
+  const sfxKinds = () => (st.health && st.health.assets && st.health.assets.sfx.length ? st.health.assets.sfx : DEFAULT_SFX);
+
+  function renderPanel() {
+    const p = st.plan; if (!p) return;
+    st.dropdowns.forEach(d => d.destroy()); st.dropdowns = [];
+    $$('.tab').forEach(t => t.classList.toggle('on', t.dataset.tab === st.tab));
+    let h = '';
+    if (st.tab === 'captions') {
+      h += head('fa-closed-captioning', `${p.captions.length} caption chunks`, addBtn('captions', 'Add at playhead'));
+      h += p.captions.length ? p.captions.map((c, i) => `${rowOpen('captions', i)}${seekBtn(c.start)}${txtInp('captions', i, 'text', c.text)}${numInp('captions', i, 'start', c.start)}${arrow}${numInp('captions', i, 'end', c.end)}
+        <label class="toggle-row" style="padding:4px 8px;gap:8px"><small>emph</small><input type="checkbox" class="toggle" ${c.emphasis ? 'checked' : ''} data-l="captions" data-i="${i}" data-f="emphasis" data-t="bool"></label>${delBtn('captions', i)}</div>`).join('') : empty('No captions - no speech was detected, or add one manually.');
+    } else if (st.tab === 'overlays') {
+      h += head('fa-bolt', 'Hook · first 3 s, top') + `<div class="row">${txtInp('', 0, 'hook', p.hook)}</div>`;
+      h += head('fa-heading', `Headlines (${p.headlines.length})`, addBtn('headlines', 'Add'));
+      h += p.headlines.length ? p.headlines.map((x, i) => `${rowOpen('headlines', i)}${seekBtn(x.start)}${txtInp('headlines', i, 'main', x.main)}${txtInp('headlines', i, 'sub', x.sub || '')}${numInp('headlines', i, 'start', x.start)}${arrow}${numInp('headlines', i, 'end', x.end)}${delBtn('headlines', i)}</div>`).join('') : empty('No headlines.');
+      h += head('fa-tag', `Neon badges (${p.badges.length})`, addBtn('badges', 'Add'));
+      h += p.badges.length ? p.badges.map((x, i) => `${rowOpen('badges', i)}${seekBtn(x.start)}${txtInp('badges', i, 'text', x.text)}${colorPills(i, x.color)}${numInp('badges', i, 'start', x.start)}${arrow}${numInp('badges', i, 'end', x.end)}${delBtn('badges', i)}</div>`).join('') : empty('No badges.');
+      h += head('fa-face-grin-stars', `Stickers (${p.stickers.length})`, addBtn('stickers', 'Add'));
+      h += p.stickers.length ? p.stickers.map((x, i) => `${rowOpen('stickers', i)}${seekBtn(x.start)}${sdSlot('stickers', i, 'kind', x.kind, stickerKinds())}${sdSlot('stickers', i, 'position', x.position, POSITIONS)}${numInp('stickers', i, 'start', x.start)}${arrow}${numInp('stickers', i, 'end', x.end)}${delBtn('stickers', i)}</div>`).join('') : empty('No stickers.');
+      h += `<p class="muted">Top-zone rule: hook, headlines, code windows, PiP b-roll, badges and stickers share the space above the face - overlapping ones are dropped on re-render (earliest wins).</p>`;
+    } else if (st.tab === 'broll') {
+      const src = st.health && st.health.media ? (st.health.media.stock ? `stock: ${st.health.media.stock}` : `AI images (${st.health.media.image_model}) · add PEXELS_API_KEY for real stock video`) : '';
+      h += head('fa-photo-film', `B-roll (${p.broll.length}) · ${esc(src)}`, addBtn('broll', 'Add at playhead'));
+      h += p.broll.length ? p.broll.map((x, i) => `${rowOpen('broll', i)}${seekBtn(x.start)}
+        ${x.asset ? `<img class="thumb" src="/api/jobs/${st.job.job_id}/media/${esc(x.asset.thumb || x.asset.file)}" title="${esc(x.asset.credit)}" alt="">` : `<span class="thumb-empty">${x.query ? 'found on<br>re-render' : 'type a<br>query'}</span>`}
+        ${txtInp('broll', i, 'query', x.query)}${sdSlot('broll', i, 'kind', x.kind, ['image', 'video'])}${sdSlot('broll', i, 'mode', x.mode, ['full', 'pip'])}${sdSlot('broll', i, 'motion', x.motion, MOTIONS)}
+        ${numInp('broll', i, 'start', x.start)}${arrow}${numInp('broll', i, 'end', x.end)}
+        <button class="btn btn-secondary btn-xs" data-swap="${i}" title="Try the next result on re-render"><i class="fa-solid fa-shuffle"></i></button>${delBtn('broll', i)}</div>${x.asset ? `<p class="credit">${esc(x.asset.kind)} · ${esc(x.asset.credit)}${x.asset.page_url ? ` · <a target="_blank" rel="noopener" href="${esc(x.asset.page_url)}">source</a>` : ''}</p>` : ''}`).join('')
+        : empty('No b-roll yet. Add one with a short English scene description and re-render - the AI finds or generates the media.');
+      h += head('fa-magnifying-glass-plus', `Camera zooms (${p.zooms.length})`, addBtn('zooms', 'Add at playhead'));
+      h += p.zooms.length ? p.zooms.map((z, i) => `${rowOpen('zooms', i)}${seekBtn(z.at)}${sdSlot('zooms', i, 'kind', z.kind, ZOOM_KINDS)}<span class="chip">from</span>${numInp('zooms', i, 'at', z.at)}${arrow}${numInp('zooms', i, 'end', z.end)}<span class="chip">scale</span>${numInp('zooms', i, 'scale', z.scale)}${delBtn('zooms', i)}</div>`).join('') : empty('No zooms.');
+      h += `<p class="muted">full = full-screen cutaway with Ken Burns motion and a flash cut · pip = card that slides in above the face · punch = 0.4 s snap · in = slow push-in, then release · out = start tight, pull back. Editing a query or pressing shuffle clears the picked media so the next re-render searches again.</p>`;
+    } else if (st.tab === 'code') {
+      h += head('fa-code', `Code windows (${p.code.length})`, addBtn('code', 'Add at playhead'));
+      h += p.code.length ? p.code.map((x, i) => `${rowOpen('code', i)}${seekBtn(x.start)}${txtInp('code', i, 'title', x.title, 'grow')}${sdSlot('code', i, 'language', x.language, LANGS)}${numInp('code', i, 'start', x.start)}${arrow}${numInp('code', i, 'end', x.end)}${delBtn('code', i)}
+        <textarea data-l="code" data-i="${i}" data-f="code" data-t="str" spellcheck="false">${esc(x.code)}</textarea></div>`).join('') : empty('No code windows. Add one when you explain code - 3-8 lines, max 44 characters each; it types itself out.');
+      h += head('fa-scissors', `Cuts (${p.cuts.length}) · removed on re-render`, addBtn('cuts', 'Add In → Out'));
+      h += p.cuts.length ? p.cuts.map((x, i) => `${rowOpen('cuts', i)}${seekBtn(x.start)}<span class="chip">remove</span>${numInp('cuts', i, 'start', x.start)}${arrow}${numInp('cuts', i, 'end', x.end)}<span class="muted">${fmtT(x.end - x.start)} s</span>${delBtn('cuts', i)}</div>`).join('') : empty('No cuts. Set In and Out on the timeline and press Cut In→Out, or turn on auto jump-cuts before generating.');
+    } else {
+      h += head('fa-music', `Sound effects (${p.sfx.length}) · max one per 4 s`, addBtn('sfx', 'Add at playhead'));
+      h += p.sfx.length ? p.sfx.map((x, i) => `${rowOpen('sfx', i)}${seekBtn(x.at)}${sdSlot('sfx', i, 'kind', x.kind, sfxKinds())}<span class="chip">at</span>${numInp('sfx', i, 'at', x.at)}${delBtn('sfx', i)}</div>`).join('') : empty('No sound effects.');
+      h += head('fa-microphone-lines', `Voice effects (${p.voice.length}) · on the speaker's audio`, addBtn('voice', 'Add at playhead'));
+      h += p.voice.length ? p.voice.map((x, i) => `${rowOpen('voice', i)}${seekBtn(x.start)}${sdSlot('voice', i, 'effect', x.effect, VOICE_FX)}${numInp('voice', i, 'start', x.start)}${arrow}${numInp('voice', i, 'end', x.end)}${delBtn('voice', i)}</div>`).join('') : empty('No voice effects.');
+      h += `<p class="muted">boost = louder · excited = louder + brighter · deep = warmer + bassier · soft = quieter. 60 ms ramps keep it click-free.</p>`;
+      h += `<div class="row"><span class="chip">music mood</span>${txtInp('', 0, 'music_mood', p.music_mood)}<span class="muted">(hint for your music pick - not rendered)</span></div>`;
+    }
+    el.panel.innerHTML = h;
+    $$('.sd-host', el.panel).forEach(host => {
+      const { l, i, f, v } = host.dataset, opts = host.dataset.opts.split('|').map(o => ({ value: o, label: label(o) }));
+      st.dropdowns.push(sdInit(host, { options: opts, value: v, onChange: val => { setField(l, Number(i), f, val); renderTimeline(); } }));
+    });
+  }
+  $$('.tab').forEach(t => t.addEventListener('click', () => { st.tab = t.dataset.tab; renderPanel(); }));
+
+  function setField(l, i, f, v) {
+    if (!l) { st.plan[f] = v; return; }
+    const it = st.plan[l] && st.plan[l][i]; if (!it) return;
+    it[f] = v;
+    if (l === 'broll' && (f === 'query' || f === 'kind')) it.asset = null;        // re-search on re-render
+    if (l === 'zooms' && f === 'kind' && v === 'punch') it.end = num(it.at + 0.4);
+  }
+  const bind = e => {
+    const t = e.target, { l, i, f } = t.dataset;
+    if (f === undefined || t.dataset.set !== undefined) return;
+    setField(l, Number(i), f, t.dataset.t === 'num' ? num(t.value) : t.dataset.t === 'bool' ? t.checked : t.value);
+    e.type === 'change' && renderTimeline();
+  };
+  el.panel.addEventListener('input', bind); el.panel.addEventListener('change', bind);
+  el.panel.addEventListener('click', e => {
+    const b = e.target.closest('[data-seek],[data-del],[data-add],[data-set],[data-swap],[data-row]'); if (!b) return;
+    if (b.dataset.seek !== undefined) { seekSrc(Number(b.dataset.seek)); return; }
+    if (b.dataset.set !== undefined) { st.plan[b.dataset.l][b.dataset.i][b.dataset.f] = b.dataset.set; return renderPanel(); }
+    if (b.dataset.swap !== undefined) { const x = st.plan.broll[Number(b.dataset.swap)]; x.skip = (x.skip || 0) + 1; x.asset = null; toast('Next result will be picked on re-render', 'ok', 2500); return renderPanel(); }
+    if (b.dataset.del) { const [l, i] = b.dataset.del.split(':'); st.plan[l].splice(Number(i), 1); st.sel = null; renderPanel(); return renderTimeline(); }
+    if (b.dataset.add) return addItem(b.dataset.add);
+    if (b.dataset.row && !e.target.closest('input,textarea,button,.sd-host,.pill')) { const [l, i] = b.dataset.row.split(':'); select(l, Number(i), false); }
+  });
+
+  function addItem(l, at) {
+    const t = at ?? playheadSrc(), inP = st.inP ?? t, outP = st.outP ?? Math.min(dur(), inP + 1);
+    const fresh = {
+      captions: { text: 'NEW CAPTION', start: t, end: t + 1, emphasis: false },
+      headlines: { main: 'HEADLINE', sub: null, start: t, end: t + 2.5 },
+      badges: { text: 'KEY POINT', start: t, end: t + 2, color: 'blue' },
+      stickers: { kind: 'question_marks', start: t, end: t + 2, position: 'top' },
+      broll: { query: '', kind: 'image', mode: 'pip', motion: 'zoom_in', start: t, end: t + 2.5, asset: null, skip: 0 },
+      code: { title: 'main.py', language: 'python', code: 'print("hello")', start: t, end: t + 4 },
+      zooms: { at: t, end: t + 0.4, scale: 1.18, kind: 'punch' },
+      sfx: { at: t, kind: 'pop' },
+      voice: { start: t, end: t + 1.5, effect: 'boost' },
+      cuts: { start: num(Math.min(inP, outP)), end: num(Math.max(inP, outP)) },
+    }[l];
+    if (!fresh) return;
+    if (l === 'cuts' && fresh.end - fresh.start < 0.25) return toast('Set In and Out at least 0.25 s apart first (keys I / O)');
+    (st.plan[l] = st.plan[l] || []).push(fresh);
+    st.tab = LISTS[l]; select(l, st.plan[l].length - 1, true);
+  }
+  function select(l, i, scroll) {
+    st.sel = { l, i }; st.tab = LISTS[l] || st.tab; renderPanel(); renderTimeline();
+    const row = $(`[data-row="${l}:${i}"]`, el.panel);
+    if (row && scroll) { row.scrollIntoView({ behavior: 'smooth', block: 'center' }); const inp = row.querySelector('input[type=text],textarea'); inp && inp.focus(); }
+  }
+
+  // ---------- re-render / refine / reset / new / delete
+  const cleanPlan = () => {
+    const plan = JSON.parse(JSON.stringify(st.plan));
+    ['voice', 'broll', 'zooms', 'code', 'cuts'].forEach(k => { plan[k] = plan[k] || []; });
+    plan.broll.forEach(b => { b.skip = Math.max(0, Math.round(Number(b.skip) || 0)); });
+    plan.headlines.forEach(h => { h.sub = (h.sub || '').trim() || null; });
+    return plan;
+  };
+  el.rerender.addEventListener('click', async () => {
+    if (!st.job || !st.plan) return;
+    el.rerender.disabled = true; st.mode = 'rerender';
+    try {
+      st.job = await runAction('Re-rendering…', api(`/api/jobs/${st.job.job_id}/plan`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(cleanPlan()) }, false));
+      showProgress(st.job); startPoll();
+    } catch (e) { toast(e.message); el.rerender.disabled = false; }
+  });
+  el.btnRefine.addEventListener('click', async () => {
+    const text = el.refineText.value.trim();
+    if (!st.job) return; if (text.length < 3) return toast('Describe what to change first');
+    const body = { instruction: text };
+    if (el.refineRange.checked) { if (st.inP === null || st.outP === null) return toast('Set In and Out on the timeline first (keys I / O)'); body.start = Math.min(st.inP, st.outP); body.end = Math.max(st.inP, st.outP); }
+    el.btnRefine.disabled = true; st.mode = 'refine';
+    try {
+      st.job = await runAction('Sending to AI…', api(`/api/jobs/${st.job.job_id}/refine`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }, false));
+      showProgress(st.job); startPoll();
+    } catch (e) { toast(e.message); el.btnRefine.disabled = false; }
+  });
+  el.reset.addEventListener('click', async () => {
+    if (!st.job) return;
+    try { st.plan = await api(`/api/jobs/${st.job.job_id}/plan?original=1`); st.sel = null; renderPanel(); renderTimeline(); toast('AI plan restored - hit Re-render to apply', 'ok', 3000); }
+    catch (e) { toast(e.message); }
+  });
+  function resetAll() {
+    stopPoll(); st.job = null; st.plan = null; st.rendered = null; st.sel = null; st.inP = st.outP = null; st.mode = 'generate';
+    el.video.removeAttribute('src'); el.video.load(); show(el.zResult, false); show(el.zProgress, false); clearFile();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+  $('#btnNew').addEventListener('click', resetAll);
+  $('#btnDelete').addEventListener('click', async () => {
+    if (!st.job) return;
+    const res = await Swal.fire({ title: 'Delete this job?', text: 'The upload, plan, media and final video are removed from the server.', icon: 'warning', showCancelButton: true, confirmButtonText: 'Delete', confirmButtonColor: '#ea4335' });
+    if (!res.isConfirmed) return;
+    try { await runAction('Deleting…', api(`/api/jobs/${st.job.job_id}`, { method: 'DELETE' }, false)); toast('Job deleted', 'ok', 2000); resetAll(); }
+    catch (e) { toast(e.message); }
+  });
+
+  // ---------- timeline
+  // the player shows the RENDERED video (cuts already removed) - map between output time and source time
+  const renderedCuts = () => ((st.rendered && st.rendered.cuts) || []).slice().sort((a, b) => a.start - b.start);
+  function srcToOut(t) { let out = t; for (const c of renderedCuts()) { if (t >= c.end) out -= (c.end - c.start); else if (t > c.start) out -= (t - c.start); } return Math.max(0, out); }
+  function outToSrc(t) { let src = t; for (const c of renderedCuts()) { if (src >= c.start) src += (c.end - c.start); } return src; }
+  const playheadSrc = () => num(outToSrc(el.video.currentTime || 0));
+  function seekSrc(t) { el.video.currentTime = Math.max(0, srcToOut(t)); el.video.pause(); }
+
+  function renderTimeline() {
+    const p = st.plan, D = dur(); if (!p || !D) return;
+    const pps = st.pps, W = Math.max(300, Math.ceil(D * pps) + 40);
+    el.tlLabels.innerHTML = `<div class="tl-label ruler"><i class="fa-solid fa-clock"></i> time</div>` + TRACKS.map(t => `<div class="tl-label"><i class="fa-solid ${t.icon}" style="color:${t.color}"></i>${t.label} <span class="muted" style="font-weight:500">${(p[t.key] || []).length}</span></div>`).join('');
+    const step = pps >= 90 ? 0.5 : pps >= 40 ? 1 : pps >= 25 ? 2 : 5;
+    let ruler = '';
+    for (let t = 0; t <= D; t += step) ruler += `<div class="tl-tick${(t / step) % (step < 1 ? 2 : 1) ? ' minor' : ''}" style="left:${t * pps}px">${Number.isInteger(t) ? t + 's' : ''}</div>`;
+    const cutShade = p.cuts.map(c => `<div class="tl-cutshade" style="left:${c.start * pps}px;width:${(c.end - c.start) * pps}px"></div>`).join('');
+    const tracks = TRACKS.map(t => `<div class="tl-track" data-track="${t.key}">${cutShade}${(p[t.key] || []).map((x, i) => {
+      const s = Number(x[t.s]) || 0, e = t.e ? Number(x[t.e]) || s : s, sel = st.sel && st.sel.l === t.key && st.sel.i === i;
+      return `<div class="tl-block${t.e ? '' : ' point'}${t.key === 'cuts' ? ' cut' : ''}${sel ? ' selected' : ''}" data-l="${t.key}" data-i="${i}" style="left:${s * pps}px;width:${Math.max(8, (e - s) * pps)}px;background:${t.key === 'cuts' ? '' : t.color}" title="${esc(t.txt(x))} · ${fmtT(s)}${t.e ? ' → ' + fmtT(e) : ''}">${t.e ? esc(t.txt(x)) : ''}</div>`;
+    }).join('')}</div>`).join('');
+    const marks = (st.inP !== null ? `<div class="tl-mark" data-l="IN" style="left:${st.inP * pps}px"></div>` : '') + (st.outP !== null ? `<div class="tl-mark" data-l="OUT" style="left:${st.outP * pps}px"></div>` : '');
+    el.tlInner.style.width = W + 'px';
+    el.tlInner.innerHTML = `<div class="tl-ruler" style="width:${W}px">${ruler}</div>${tracks}${marks}<div id="tlPlayhead" class="tl-playhead" style="left:0"></div>`;
+    tickPlayhead();
+  }
+  function tickPlayhead() {
+    const ph = $('#tlPlayhead'); if (!ph) return;
+    const t = playheadSrc(); ph.style.left = (t * st.pps) + 'px';
+    el.tlTime.textContent = `${fmtT(t)} / ${fmtT(dur())} s`;
+    el.tlPlay.innerHTML = `<i class="fa-solid ${el.video.paused ? 'fa-play' : 'fa-pause'}"></i>`;
+    if (!el.video.paused) { const x = t * st.pps, sc = el.tlScroll; if (x < sc.scrollLeft + 40 || x > sc.scrollLeft + sc.clientWidth - 40) sc.scrollLeft = Math.max(0, x - sc.clientWidth / 3); }
+  }
+  el.video.addEventListener('timeupdate', tickPlayhead); el.video.addEventListener('play', tickPlayhead); el.video.addEventListener('pause', tickPlayhead);
+  (function raf() { !el.video.paused && tickPlayhead(); requestAnimationFrame(raf); })();
+  el.tlPlay.addEventListener('click', () => el.video.paused ? el.video.play() : el.video.pause());
+  el.tlZoom.addEventListener('input', () => { st.pps = Number(el.tlZoom.value); renderTimeline(); });
+  $('#tlIn').addEventListener('click', () => { st.inP = playheadSrc(); renderTimeline(); });
+  $('#tlOut').addEventListener('click', () => { st.outP = playheadSrc(); renderTimeline(); });
+  $('#tlCut').addEventListener('click', () => addItem('cuts'));
+  $('#tlDel').addEventListener('click', () => deleteSelected());
+  $('#tlAdd').addEventListener('click', e => { e.stopPropagation(); $('#tlAddMenu').classList.toggle('hidden'); });
+  $('#tlAddMenu').addEventListener('click', e => { const b = e.target.closest('[data-add]'); if (!b) return; $('#tlAddMenu').classList.add('hidden'); addItem(b.dataset.add); });
+  document.addEventListener('click', e => { if (!e.target.closest('.add-menu')) $('#tlAddMenu').classList.add('hidden'); });
+  function deleteSelected() { if (!st.sel || !st.plan) return; st.plan[st.sel.l].splice(st.sel.i, 1); st.sel = null; renderPanel(); renderTimeline(); }
+
+  // click = seek / select, double-click = add on that track, drag = move / trim
+  let drag = null;
+  el.tlInner.addEventListener('pointerdown', e => {
+    const blk = e.target.closest('.tl-block');
+    if (!blk) return;
+    const l = blk.dataset.l, i = Number(blk.dataset.i), tr = TRACKS.find(t => t.key === l), x = st.plan[l][i];
+    const r = blk.getBoundingClientRect(), edge = 8, px = e.clientX - r.left;
+    const mode = !tr.e ? 'move' : px <= edge ? 'l' : px >= r.width - edge ? 'r' : 'move';
+    drag = { l, i, tr, mode, x0: e.clientX, s0: Number(x[tr.s]) || 0, e0: tr.e ? Number(x[tr.e]) || 0 : 0, moved: false, blk };
+    blk.setPointerCapture(e.pointerId); blk.classList.add('dragging'); e.preventDefault();
+  });
+  el.tlInner.addEventListener('pointermove', e => {
+    if (!drag) return;
+    const dt = (e.clientX - drag.x0) / st.pps, x = st.plan[drag.l][drag.i], tr = drag.tr, D = dur();
+    if (Math.abs(e.clientX - drag.x0) > 2) drag.moved = true;
+    let s = drag.s0, en = drag.e0;
+    if (drag.mode === 'move') { const len = en - s; s = Math.min(Math.max(0, drag.s0 + dt), Math.max(0, D - len)); en = s + len; }
+    else if (drag.mode === 'l') s = Math.min(Math.max(0, drag.s0 + dt), en - 0.1);
+    else en = Math.max(Math.min(D, drag.e0 + dt), s + 0.1);
+    x[tr.s] = num(s); tr.e && (x[tr.e] = num(en));
+    if (drag.l === 'zooms' && x.kind === 'punch') x.end = num(x.at + 0.4);
+    drag.blk.style.left = (x[tr.s] * st.pps) + 'px'; tr.e && (drag.blk.style.width = Math.max(8, (x[tr.e] - x[tr.s]) * st.pps) + 'px');
+  });
+  const endDrag = e => {
+    if (!drag) return;
+    const d = drag; drag = null; d.blk.classList.remove('dragging');
+    if (!d.moved) { select(d.l, d.i, true); seekSrc(Number(st.plan[d.l][d.i][d.tr.s]) || 0); }
+    else { st.sel = { l: d.l, i: d.i }; renderPanel(); renderTimeline(); }
+  };
+  el.tlInner.addEventListener('pointerup', endDrag); el.tlInner.addEventListener('pointercancel', endDrag);
+  el.tlInner.addEventListener('click', e => {
+    if (e.target.closest('.tl-block')) return;
+    const rect = el.tlInner.getBoundingClientRect(), t = Math.min(dur(), Math.max(0, (e.clientX - rect.left) / st.pps));
+    seekSrc(t); tickPlayhead();
+  });
+  el.tlInner.addEventListener('dblclick', e => {
+    const track = e.target.closest('.tl-track'); if (!track || e.target.closest('.tl-block')) return;
+    const rect = el.tlInner.getBoundingClientRect(), t = num(Math.min(dur(), Math.max(0, (e.clientX - rect.left) / st.pps)));
+    track.dataset.track === 'cuts' ? (st.inP = t, st.outP = num(Math.min(dur(), t + 1)), addItem('cuts')) : addItem(track.dataset.track, t);
+  });
+  document.addEventListener('keydown', e => {
+    if (!st.plan || e.target.closest('input,textarea,[contenteditable]')) return;
+    if (e.key === ' ') { e.preventDefault(); el.video.paused ? el.video.play() : el.video.pause(); }
+    else if (e.key === 'i' || e.key === 'I') { st.inP = playheadSrc(); renderTimeline(); }
+    else if (e.key === 'o' || e.key === 'O') { st.outP = playheadSrc(); renderTimeline(); }
+    else if (e.key === 'Delete' || e.key === 'Backspace') { deleteSelected(); }
+    else if ((e.key === 'ArrowLeft' || e.key === 'ArrowRight') && st.sel) {
+      const x = st.plan[st.sel.l][st.sel.i], tr = TRACKS.find(t => t.key === st.sel.l), d = (e.key === 'ArrowLeft' ? -1 : 1) * (e.shiftKey ? 0.5 : 0.05);
+      x[tr.s] = num(x[tr.s] + d); tr.e && (x[tr.e] = num(x[tr.e] + d)); renderPanel(); renderTimeline(); e.preventDefault();
+    }
+  });
+  window.addEventListener('beforeunload', e => { if (st.poll) { e.preventDefault(); e.returnValue = ''; } });
+
+  // ?job=<id> reopens a job after a refresh (the server keeps it until restart / delete)
+  const jobParam = new URLSearchParams(location.search).get('job');
+  jobParam && /^[0-9a-f]{12}$/.test(jobParam) && api(`/api/jobs/${jobParam}`).then(j => {
+    st.job = j; st.mode = 'reopen'; showProgress(j);
+    j.status === 'done' ? loadResult() : (j.status === 'queued' || j.status === 'running') && startPoll();
+  }).catch(e => toast(e.message));
+  const rememberJob = () => st.job && history.replaceState(null, '', `?job=${st.job.job_id}`);
+  el.gen.addEventListener('click', () => setTimeout(rememberJob, 1500));
+  $('#btnNew').addEventListener('click', () => history.replaceState(null, '', location.pathname));
+})();
+</script>
+</body>
+</html>

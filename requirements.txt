@@ -1,0 +1,8 @@
+# AI Shorts Editor - Python 3.11+ (tested on 3.12)
+fastapi>=0.115,<1
+uvicorn[standard]>=0.30,<1
+python-multipart>=0.0.9
+pydantic>=2.7,<3
+python-dotenv>=1.0
+faster-whisper>=1.0,<2
+openai>=1.54,<3
