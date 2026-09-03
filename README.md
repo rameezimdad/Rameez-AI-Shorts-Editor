@@ -20,8 +20,7 @@ Local web app that turns a raw vertical short into a finished one: word-timed ka
 | **B-roll pip** | 820×500 card with a white border that slides down above the face | `pad` + animated `overlay` y |
 | **Zooms** | `punch` snap on a beat · `in` slow push-in then release · `out` start tight and pull back | one `zoompan` expression on the speaker |
 | Voice | louder / brighter / deeper / softer delivery per moment | gated `volume` ramp + `treble`/`bass` |
-| SFX | whoosh / pop / ding / boom / riser on beats | `adelay` + `amix` |
-
+| SFX | 13 kinds (whoosh, pop, ding, boom, riser, click, cash, notification, drum, bass drop, glitch, typing, reverse swoosh) on beats | `adelay` + `amix` |
 | **Code window** | editor-style card (traffic lights, title), code typed out with a cursor, Dracula syntax colours, typing sound | ~1 ASS line per character, JetBrains Mono |
 | **Cuts** | manual In→Out trims from the timeline, optional auto jump-cuts on silences over 1 s | `select` / `aselect` applied last, so every effect stays in sync |
 | **Voice cleanup (ENC)** | high-pass → RNNoise neural denoise → FFT residual → de-esser → voice compressor (measured: noise floor −18 dB, speech level unchanged) | `arnndn` with `assets/audio/rnnoise.rnnn`, falls back to `afftdn` |
@@ -79,7 +78,7 @@ python scripts/setup_assets.py   # fonts + placeholder SFX + placeholder sticker
 python scripts/smoke_test.py     # optional: proves ffmpeg/libass/render work, no API key needed
 ```
 
-`setup_assets.py` downloads **Montserrat ExtraBold** and **Anton** (the Impact look-alike) from GitHub and synthesizes the five SFX tones and six 2-second looping alpha WebM stickers with ffmpeg. Already-present files are kept, so drop your own files in and re-run any time (`--force` regenerates, `--skip-fonts` works offline).
+`setup_assets.py` downloads **Montserrat ExtraBold** and **Anton** (the Impact look-alike) from GitHub and downloads JetBrains Mono (code windows) and the RNNoise model (voice cleanup), and synthesizes 13 SFX and 25 two-second looping alpha WebM stickers with ffmpeg. Already-present files are kept, so drop your own files in and re-run any time (`--force` regenerates, `--skip-fonts` works offline).
 
 ## Run
 
@@ -87,7 +86,7 @@ python scripts/smoke_test.py     # optional: proves ffmpeg/libass/render work, n
 uvicorn app.main:app --reload
 ```
 
-Open <http://127.0.0.1:8000>. Drop a vertical clip, pick options, **Generate**. The first run downloads the whisper model (`large-v3` ≈ 3 GB; set `WHISPER_MODEL=small` or `medium` on a laptop CPU) – the progress card shows downloaded / total MB, speed and time left while it happens. Progress, step name and the live ffmpeg log stream in the page. When it finishes you get a 9:16 player, a download button and the **Edit plan** panel (Captions / Overlays / SFX). Change anything, hit **Re-render**: only the ASS file and the ffmpeg pass run again, no tokens spent.
+Open <http://127.0.0.1:8000>. Drop a vertical clip, pick options, **Generate**. The first run downloads the whisper model (`large-v3` ≈ 3 GB; set `WHISPER_MODEL=small` or `medium` on a laptop CPU) – the progress card shows downloaded / total MB, speed and time left while it happens. Progress, step name and the live ffmpeg log stream in the page. When it finishes you get a 9:16 player, a download button and the editor: inspector tabs (Captions · Text & Stickers · B-roll & Zooms · Code & Cuts · SFX & Voice), the timeline and the refine box. Change anything, hit **Re-render**: only the ASS file and the ffmpeg pass run again, no tokens spent.
 
 ### Downloading the whisper model yourself
 
