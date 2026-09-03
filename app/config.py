@@ -47,7 +47,7 @@ def _env_bool(key: str, default: bool) -> bool:
 
 # llm / whisper
 OPENAI_API_KEY = _env("OPENAI_API_KEY", "")
-LLM_MODEL = _env("LLM_MODEL", "gpt-4o-2024-08-06")
+LLM_MODEL = _env("LLM_MODEL", "gpt-5.5")
 LLM_TWO_PASS = _env_bool("LLM_TWO_PASS", True)  # editorial brief first, then the structured plan
 LLM_REASONING = _env("LLM_REASONING", "medium")  # gpt-5 / o-series only: minimal | low | medium | high
 MODELS_DIR = ROOT / "models"
@@ -130,6 +130,10 @@ _PRICES: dict[str, tuple[float, float]] = {
     "gpt-4.1-nano": (0.10, 0.40),
     "gpt-5": (1.25, 10.00),
     "gpt-5-mini": (0.25, 2.00),
+    "gpt-5-nano": (0.05, 0.40),
+    # 5.x rates assumed = gpt-5 until confirmed; override with LLM_PRICE_IN / LLM_PRICE_OUT
+    "gpt-5.1": (1.25, 10.00), "gpt-5.2": (1.25, 10.00), "gpt-5.4": (1.25, 10.00), "gpt-5.5": (1.25, 10.00),
+    "gpt-5.4-mini": (0.25, 2.00), "gpt-5.4-nano": (0.05, 0.40),
 }
 
 

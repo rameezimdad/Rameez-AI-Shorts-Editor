@@ -104,7 +104,7 @@ The app checks that folder first and skips the download entirely when `model.bin
 | Var | Default | Notes |
 |---|---|---|
 | `OPENAI_API_KEY` | – | required for uploads |
-| `LLM_MODEL` | `gpt-4o-2024-08-06` | any model that supports structured outputs |
+| `LLM_MODEL` | `gpt-5.5` | any model with structured outputs. `gpt-5.x` think before answering (richer plans, ~80 s); `gpt-4o-2024-08-06` answers in ~10 s with simpler plans |
 | `WHISPER_MODEL` | `large-v3` | `tiny` `base` `small` `medium` `large-v3-turbo` `large-v3` – **`large-v3-turbo` is the CPU sweet spot** (large-v3 quality, ~6x faster, 1.6 GB) |
 | `WHISPER_DEVICE` | `cpu` | `cuda` if you have CTranslate2 GPU support |
 | `WHISPER_COMPUTE` | `int8` | `float16` on GPU |
