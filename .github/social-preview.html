@@ -1,0 +1,66 @@
+<!--
+  Developed by Mohammad Rameez Imdad (Rameez Scripts)
+  WhatsApp: https://whatsapp.rameezscripts.com/ (For Custom Projects)
+  YouTube: https://www.youtube.com/@rameezimdad (Subscribe for more!)
+  GitHub social preview card - 1280x640. Regenerate:
+  chrome --headless=new --window-size=1280,640 --screenshot=social-preview.png social-preview.html
+-->
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{width:1280px;height:640px;overflow:hidden;
+    font-family:'Segoe UI','Helvetica Neue',Arial,sans-serif;
+    background:radial-gradient(1200px 700px at 78% 12%,#0b4a8f 0%,#001f3f 55%,#00142b 100%);
+    color:#fff;position:relative}
+  .glow{position:absolute;border-radius:50%;filter:blur(90px);opacity:.5}
+  .g1{width:520px;height:520px;background:#0074D9;top:-190px;right:-110px}
+  .g2{width:380px;height:380px;background:#7b2ff7;bottom:-180px;left:-120px;opacity:.38}
+  .grid{position:absolute;inset:0;opacity:.07;
+    background-image:linear-gradient(#fff 1px,transparent 1px),linear-gradient(90deg,#fff 1px,transparent 1px);
+    background-size:64px 64px}
+  .wrap{position:relative;padding:62px 72px;height:100%;display:flex;flex-direction:column;justify-content:space-between}
+  .kicker{display:inline-flex;align-items:center;gap:10px;align-self:flex-start;
+    background:rgba(0,116,217,.18);border:1px solid rgba(88,180,255,.45);
+    padding:9px 18px;border-radius:999px;font-size:19px;font-weight:600;letter-spacing:.14em;color:#8fd0ff}
+  h1{font-size:82px;line-height:1.02;font-weight:800;letter-spacing:-.024em;margin:26px 0 20px}
+  h1 span{background:linear-gradient(94deg,#4fc3ff,#7b6bff 55%,#ff7ac6);
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent}
+  p.sub{font-size:28px;line-height:1.42;color:#c3d6ea;max-width:1010px;font-weight:400}
+  .chips{display:flex;flex-wrap:wrap;gap:12px;margin-top:26px}
+  .chip{background:rgba(255,255,255,.085);border:1px solid rgba(255,255,255,.17);
+    padding:10px 20px;border-radius:12px;font-size:21px;font-weight:600;color:#e8f2fb}
+  .foot{display:flex;align-items:center;justify-content:space-between;
+    border-top:1px solid rgba(255,255,255,.14);padding-top:26px}
+  .brand{display:flex;align-items:center;gap:16px}
+  .mark{width:58px;height:58px;border-radius:15px;display:grid;place-items:center;
+    background:linear-gradient(135deg,#0074D9,#7b2ff7);font-size:29px;font-weight:800}
+  .bn{font-size:26px;font-weight:700;line-height:1.25}
+  .bu{font-size:19px;color:#9fb8d1}
+  .stack{font-size:21px;color:#9fb8d1;text-align:right;line-height:1.5}
+  .stack b{color:#e8f2fb}
+</style></head><body>
+  <div class="glow g1"></div><div class="glow g2"></div><div class="grid"></div>
+  <div class="wrap">
+    <div>
+      <div class="kicker">OPEN SOURCE &nbsp;·&nbsp; SELF-HOSTED &nbsp;·&nbsp; MIT</div>
+      <h1>AI <span>Shorts Editor</span></h1>
+      <p class="sub">Drop in a raw vertical clip — get back a finished short. Karaoke captions,
+      AI b-roll, zooms, stickers, SFX and clean voice in <b style="color:#fff">one ffmpeg pass</b>.</p>
+      <div class="chips">
+        <div class="chip">🎤 Word-timed captions</div>
+        <div class="chip">🎬 AI B-roll</div>
+        <div class="chip">🔍 Camera zooms</div>
+        <div class="chip">✂️ Real timeline</div>
+        <div class="chip">🔊 Voice cleanup</div>
+        <div class="chip">🆓 Free re-renders</div>
+      </div>
+    </div>
+    <div class="foot">
+      <div class="brand">
+        <div class="mark">RS</div>
+        <div><div class="bn">Rameez Scripts</div><div class="bu">github.com/rameezimdad</div></div>
+      </div>
+      <div class="stack"><b>Python · FastAPI · ffmpeg</b><br>faster-whisper · OpenAI</div>
+    </div>
+  </div>
+</body></html>
