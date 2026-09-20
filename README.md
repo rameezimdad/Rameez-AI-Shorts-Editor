@@ -4,7 +4,55 @@
   YouTube: https://www.youtube.com/@rameezimdad (Subscribe for more!)
 -->
 
+<div align="center">
+
 # AI Shorts Editor
+
+### Self-hosted AI video editor for YouTube Shorts, TikTok and Instagram Reels
+
+**Drop in a raw vertical clip → get back a finished short** with word-timed karaoke captions, a 3-second
+hook, AI-found B-roll, camera zooms, animated stickers, sound effects and studio-clean voice — rendered
+in **one ffmpeg pass**, then editable on a real timeline and re-renderable for free.
+
+[![Python](https://img.shields.io/badge/Python-3.11%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-async%20jobs-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![FFmpeg](https://img.shields.io/badge/FFmpeg-libass%20%7C%20VP9%20alpha-007808?logo=ffmpeg&logoColor=white)](https://ffmpeg.org/)
+[![faster-whisper](https://img.shields.io/badge/faster--whisper-word%20timestamps-FF6F00)](https://github.com/SYSTRAN/faster-whisper)
+[![OpenAI](https://img.shields.io/badge/OpenAI-structured%20outputs-412991?logo=openai&logoColor=white)](https://platform.openai.com/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Stars](https://img.shields.io/github/stars/rameezimdad/Rameez-AI-Shorts-Editor?style=social)](https://github.com/rameezimdad/Rameez-AI-Shorts-Editor/stargazers)
+
+[Features](#the-editors-toolbox-what-the-ai-decides-what-ffmpeg-renders) ·
+[Quick start](#quick-start-one-click) ·
+[Setup](#setup-manual) ·
+[API](#api) ·
+[Edit plan](#edit-plan-schema) ·
+[Troubleshooting](#troubleshooting) ·
+[YouTube](https://www.youtube.com/@rameezimdad)
+
+</div>
+
+---
+
+## Why this exists
+
+Editing a short by hand costs 30–60 minutes: cutting the silences, typing the captions, finding B-roll,
+placing the zooms, mixing the sound. Cloud tools do it for you but charge per minute, watermark the
+output and never show you the timeline. **This runs on your own machine** — your key, your ffmpeg, your
+files — and the only cost is a fraction of a cent of tokens per video. Re-renders are free.
+
+## What you get
+
+- 🎤 **Auto captions that hit the beat** — `faster-whisper` word timestamps, 2–4 word karaoke chunks with a live word highlight
+- 🧠 **A two-pass AI edit plan** — the model writes an editorial brief, then a structured plan of every caption, hook, headline, badge, sticker, zoom, cut and sound effect
+- 🎬 **AI-found B-roll** — real stock video and photos from Pexels/Pixabay, or on-topic stills generated with `gpt-image-1-mini`, cut in full-screen with Ken Burns motion or as a sliding PiP card
+- 🔍 **Camera zooms and flash cuts** — punch-in on a beat, slow push-in, pull-back, white flash on the cutaway
+- ✨ **Stickers, neon badges, headlines** — alpha-channel WebM overlays and Impact-style top-zone text
+- 🔊 **Voice that lands** — per-moment gain and EQ driven by the words, plus RNNoise cleanup (measured −18 dB noise floor, speech untouched)
+- ✂️ **A real timeline** — drag to move, drag edges to trim, `I`/`O` markers, Cut In→Out, auto jump-cuts on silence
+- 💬 **"Ask AI to refine"** — fix one time window in plain English; everything outside it stays byte-for-byte identical
+- 💻 **Code windows** — typed-out, syntax-coloured editor cards with a typing sound, for dev content
+- 🆓 **Free re-renders** — edit the plan, hit re-render: no whisper, no LLM, no tokens
 
 Local web app that turns a raw vertical short into a finished one: word-timed karaoke captions, a 3-second hook, Impact-style headlines, neon badges, animated alpha stickers, sound effects, voice emphasis, **AI-found B-roll cutaways (images and video), camera zooms and flash cuts** – all driven by a two-pass LLM edit plan you can tweak and re-render for free.
 
@@ -25,7 +73,7 @@ Local web app that turns a raw vertical short into a finished one: word-timed ka
 | **Cuts** | manual In→Out trims from the timeline, optional auto jump-cuts on silences over 1 s | `select` / `aselect` applied last, so every effect stays in sync |
 | **Voice cleanup (ENC)** | high-pass → RNNoise neural denoise → FFT residual → de-esser → voice compressor (measured: noise floor −18 dB, speech level unchanged) | `arnndn` with `assets/audio/rnnoise.rnnn`, falls back to `afftdn` |
 
-Every layer is on its own toggle in the upload form and editable after the first render - row by row in the inspector, or on the **timeline** (drag to move, drag edges to trim, double-click a track to add, `I`/`O` mark In/Out, **Cut In→Out**, `Del` removes, `Space` plays). **Ask AI to refine** sends the current plan plus your instruction ("make captions 5-12 s punchier", "swap the first b-roll for a money scene") to the model, optionally limited to the In/Out range, and re-renders; media that didn't change is reused.
+Every layer is on its own toggle in the upload form and editable after the first render - row by row in the inspector, or on the **timeline** (drag to move, drag edges to trim, double-click a track to add, `I`/`O` mark In/Out, **Cut In→Out**, `Del` removes, `Space` plays). **Ask AI to refine** edits one time window. The server reads the window from your words ("at 35 sec" → 32–39 s, "between 5 and 12 seconds", "first 10 seconds", "last 5s", "the hook") or from the In/Out markers; the model gets the transcript, the items inside that window and the neighbours as read-only context, writes an analysis of what is literally being said there (shown as a note when it finishes), then returns the complete set of items for that window. Everything outside the window is left byte-for-byte unchanged, and media that did not change is reused.
 
 **Sound effects and stickers are placeholders you can replace.** 13 synthesized SFX (`whoosh swoosh_out pop ding boom riser click cash notification drum bass_drop glitch typing`) and 25 libass-rendered sticker badges with 5 animation styles ship out of the box. Drop real files with the same names into `assets/sfx/` and `assets/stickers/`, or import a pack with `python scripts/setup_assets.py --sfx-pack path/to/folder` (normalised to 48 kHz / −16 LUFS). Free packs: Pixabay Sound Effects, Mixkit, Freesound (check licences).
 
@@ -213,9 +261,48 @@ Synthesizes a 10 s test clip, swaps whisper and the LLM for fakes, runs the real
 
 One LLM call per video: the compact `word|start|end` transcript in, the plan out. A 60 s short is typically 1.5–3k prompt tokens and 1–2k completion tokens, well under a cent on `gpt-4o-2024-08-06` (the exact usage and estimate show in the result panel). Re-renders cost nothing.
 
+
+## FAQ
+
+**Does it upload my video anywhere?** No. The clip, the audio, the render and the output all stay on your
+machine. The only thing that leaves is the plain-text transcript, sent to OpenAI to plan the edit — and
+the B-roll queries, if you enable stock or generated media.
+
+**Do I need a GPU?** No. Whisper runs on CPU; `large-v3-turbo` is the sweet spot. A GPU with CTranslate2
+support makes transcription several times faster (`WHISPER_DEVICE=cuda`).
+
+**What does one video cost?** A fraction of a cent in tokens — one LLM call per video, roughly 1.5–3k
+prompt and 1–2k completion tokens. Generated B-roll stills add ≈ $0.006 each. Re-renders are free.
+
+**Can I use it on horizontal video?** It renders 1080×1920 (9:16). Wider input is scaled and centre-cropped.
+
+**Is it really free?** The code is MIT. You bring your own OpenAI key and your own ffmpeg.
+
+**Can I replace the placeholder stickers and sound effects?** Yes — everything in `assets/` is looked up by
+file name, so overwriting a file is the whole process. See [Replacing the placeholder assets](#replacing-the-placeholder-assets).
+
+## Keywords
+
+AI video editor · AI shorts generator · YouTube Shorts automation · TikTok video editor · Instagram Reels
+editor · automatic subtitle generator · karaoke captions · word-level timestamps · faster-whisper · OpenAI
+structured outputs · ffmpeg automation · libass / ASS subtitles · auto B-roll · Ken Burns zoom · jump cut
+detection · RNNoise voice cleanup · FastAPI video pipeline · self-hosted · open source video editing
+
 ---
 
-📩 **Let's Work Together**
-💬 WhatsApp: <https://whatsapp.rameezscripts.com> · 📱 Telegram: <https://t.me/rameezscripts> · 📧 Email: <Contact@rameezscripts.com>
+<div align="center">
 
-_Built by Rameez Scripts._
+## 📩 Let's Work Together
+
+Need a custom dashboard, ERP, automation or AI tool built? Let's talk.
+
+💬 **WhatsApp:** <https://wa.me/923224083545> &nbsp;·&nbsp; 📧 **Email:** <Contact@rameezscripts.com>
+
+▶️ **YouTube:** <https://www.youtube.com/@rameezimdad> — subscribe for more builds like this
+&nbsp;·&nbsp; 🌐 **Website:** <https://rameezscripts.com>
+
+⭐ **If this saved you an hour of editing, star the repo** — it's how other creators find it.
+
+_Built by Mohammad Rameez Imdad — **Rameez Scripts**._
+
+</div>
