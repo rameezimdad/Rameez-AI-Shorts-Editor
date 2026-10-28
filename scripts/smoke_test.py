@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Developed by Mohammad Rameez Imdad (Rameez Scripts)
-WhatsApp: https://whatsapp.rameezscripts.com/ (For Custom Projects)
+WhatsApp: https://wa.me/923435347417 (For Custom Projects)
 YouTube: https://www.youtube.com/@rameezimdad (Subscribe for more!)
 
 Smoke test - no API key, no whisper download:

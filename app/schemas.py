@@ -1,6 +1,6 @@
 """
 Developed by Mohammad Rameez Imdad (Rameez Scripts)
-WhatsApp: https://whatsapp.rameezscripts.com/ (For Custom Projects)
+WhatsApp: https://wa.me/923435347417 (For Custom Projects)
 YouTube: https://www.youtube.com/@rameezimdad (Subscribe for more!)
 
 Pydantic models. EditPlan is the LLM structured-output schema AND the editable

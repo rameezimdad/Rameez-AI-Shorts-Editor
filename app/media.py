@@ -1,6 +1,6 @@
 """
 Developed by Mohammad Rameez Imdad (Rameez Scripts)
-WhatsApp: https://whatsapp.rameezscripts.com/ (For Custom Projects)
+WhatsApp: https://wa.me/923435347417 (For Custom Projects)
 YouTube: https://www.youtube.com/@rameezimdad (Subscribe for more!)
 
 B-roll media. Stock search (Pexels / Pixabay / Wikimedia Commons) and AI generation (OpenAI images, Sora video).

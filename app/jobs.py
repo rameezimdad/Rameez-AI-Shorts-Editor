@@ -1,6 +1,6 @@
 """
 Developed by Mohammad Rameez Imdad (Rameez Scripts)
-WhatsApp: https://whatsapp.rameezscripts.com/ (For Custom Projects)
+WhatsApp: https://wa.me/923435347417 (For Custom Projects)
 YouTube: https://www.youtube.com/@rameezimdad (Subscribe for more!)
 
 In-memory job store + background runner. No Celery/Redis: the FastAPI event loop

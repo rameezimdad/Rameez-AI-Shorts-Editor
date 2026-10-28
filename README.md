@@ -1,6 +1,6 @@
 <!--
   Developed by Mohammad Rameez Imdad (Rameez Scripts)
-  WhatsApp: https://whatsapp.rameezscripts.com/ (For Custom Projects)
+  WhatsApp: https://wa.me/923435347417 (For Custom Projects)
   YouTube: https://www.youtube.com/@rameezimdad (Subscribe for more!)
 -->
 
@@ -43,15 +43,15 @@ files — and the only cost is a fraction of a cent of tokens per video. Re-rend
 
 ## What you get
 
-- 🎤 **Auto captions that hit the beat** — `faster-whisper` word timestamps, 2–4 word karaoke chunks with a live word highlight
-- 🧠 **A two-pass AI edit plan** — the model writes an editorial brief, then a structured plan of every caption, hook, headline, badge, sticker, zoom, cut and sound effect
-- 🎬 **AI-found B-roll** — real stock video and photos from Pexels/Pixabay, or on-topic stills generated with `gpt-image-1-mini`, cut in full-screen with Ken Burns motion or as a sliding PiP card
-- 🔍 **Camera zooms and flash cuts** — punch-in on a beat, slow push-in, pull-back, white flash on the cutaway
-- ✨ **Stickers, neon badges, headlines** — alpha-channel WebM overlays and Impact-style top-zone text
-- 🔊 **Voice that lands** — per-moment gain and EQ driven by the words, plus RNNoise cleanup (measured −18 dB noise floor, speech untouched)
-- ✂️ **A real timeline** — drag to move, drag edges to trim, `I`/`O` markers, Cut In→Out, auto jump-cuts on silence
-- 💬 **"Ask AI to refine"** — fix one time window in plain English; everything outside it stays byte-for-byte identical
-- 💻 **Code windows** — typed-out, syntax-coloured editor cards with a typing sound, for dev content
+- **Auto captions that hit the beat** — `faster-whisper` word timestamps, 2–4 word karaoke chunks with a live word highlight
+- **A two-pass AI edit plan** — the model writes an editorial brief, then a structured plan of every caption, hook, headline, badge, sticker, zoom, cut and sound effect
+- **AI-found B-roll** — real stock video and photos from Pexels/Pixabay, or on-topic stills generated with `gpt-image-1-mini`, cut in full-screen with Ken Burns motion or as a sliding PiP card
+- **Camera zooms and flash cuts** — punch-in on a beat, slow push-in, pull-back, white flash on the cutaway
+- **Stickers, neon badges, headlines** — alpha-channel WebM overlays and Impact-style top-zone text
+- **Voice that lands** — per-moment gain and EQ driven by the words, plus RNNoise cleanup (measured −18 dB noise floor, speech untouched)
+- **A real timeline** — drag to move, drag edges to trim, `I`/`O` markers, Cut In→Out, auto jump-cuts on silence
+- **"Ask AI to refine"** — fix one time window in plain English; everything outside it stays byte-for-byte identical
+- **Code windows** — typed-out, syntax-coloured editor cards with a typing sound, for dev content
 - 🆓 **Free re-renders** — edit the plan, hit re-render: no whisper, no LLM, no tokens
 
 Local web app that turns a raw vertical short into a finished one: word-timed karaoke captions, a 3-second hook, Impact-style headlines, neon badges, animated alpha stickers, sound effects, voice emphasis, **AI-found B-roll cutaways (images and video), camera zooms and flash cuts** – all driven by a two-pass LLM edit plan you can tweak and re-render for free.
@@ -292,14 +292,14 @@ detection · RNNoise voice cleanup · FastAPI video pipeline · self-hosted · o
 
 <div align="center">
 
-## 📩 Let's Work Together
+## Let's Work Together
 
 Need a custom dashboard, ERP, automation or AI tool built? Let's talk.
 
-💬 **WhatsApp:** <https://wa.me/923224083545> &nbsp;·&nbsp; 📧 **Email:** <Contact@rameezscripts.com>
+**WhatsApp:** <https://wa.me/923435347417> &nbsp;·&nbsp; **Email:** <Contact@rameezscripts.com>
 
 ▶️ **YouTube:** <https://www.youtube.com/@rameezimdad> — subscribe for more builds like this
-&nbsp;·&nbsp; 🌐 **Website:** <https://rameezscripts.com>
+&nbsp;·&nbsp; **Website:** <https://rameezscripts.com>
 
 ⭐ **If this saved you an hour of editing, star the repo** — it's how other creators find it.
 

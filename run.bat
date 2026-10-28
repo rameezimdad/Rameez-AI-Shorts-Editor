@@ -1,6 +1,6 @@
 @echo off
 REM Developed by Mohammad Rameez Imdad (Rameez Scripts)
-REM WhatsApp: https://whatsapp.rameezscripts.com/ (For Custom Projects)
+REM WhatsApp: https://wa.me/923435347417 (For Custom Projects)
 REM YouTube: https://www.youtube.com/@rameezimdad (Subscribe for more!)
 REM One-click launcher for Windows: venv + deps + assets + server + browser.
 cd /d "%~dp0"
